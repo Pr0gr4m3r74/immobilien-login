@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login – Geschützter Bereich</title>
+<style>
+  body { font-family: Arial; background:#f5f5f5; padding:40px; }
+  .box { max-width:400px; margin:auto; background:white; padding:25px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.2); }
+  input { width:100%; padding:10px; margin-top:10px; }
+  button { padding:10px; width:100%; margin-top:10px; cursor:pointer; }
+  .error { color:red; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>Geschützter Kundenbereich</h2>
+  <p>Bitte Passwort eingeben, um exklusive Wohnungsangebote zu sehen.</p>
+  <input type="password" id="pw" placeholder="Passwort">
+  <button onclick="login()">Login</button>
+  <p id="msg" class="error"></p>
+</div>
+<script>
+const PASS = "1234Test";
+const COOLDOWN = 1000;
+let lastTry = 0;
+function login() {
+    const now = Date.now();
+    if (now - lastTry < COOLDOWN) {
+        document.getElementById("msg").textContent = "Bitte 1 Sekunde warten...";
+        return;
+    }
+    lastTry = now;
+    const val = document.getElementById("pw").value;
+    if (val === PASS) {
+        sessionStorage.setItem("access", Date.now());
+        window.location.href = "geheim.html";
+    } else {
+        document.getElementById("msg").textContent = "Falsches Passwort";
+    }
+}
+</script>
+</body>
+</html>
