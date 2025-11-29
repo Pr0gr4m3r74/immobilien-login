@@ -1,0 +1,118 @@
+<!-- LOGIN PAGE (index.html) -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Login – Geschützter Bereich</title>
+<style>
+  body { font-family: Arial; background:#f5f5f5; padding:40px; }
+  .box { max-width:400px; margin:auto; background:white; padding:25px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.2); }
+  input { width:100%; padding:10px; margin-top:10px; }
+  button { padding:10px; width:100%; margin-top:10px; cursor:pointer; }
+  .error { color:red; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>Geschützter Kundenbereich</h2>
+  <p>Bitte Passwort eingeben, um exklusive Wohnungsangebote zu sehen.</p>
+  <input type="password" id="pw" placeholder="Passwort" />
+  <button onclick="login()">Login</button>
+  <p id="msg" class="error"></p>
+</div>
+
+<script>
+const PASS = "1234Test";
+const COOLDOWN = 1000;
+let lastTry = 0;
+
+function login() {
+    const now = Date.now();
+    if (now - lastTry < COOLDOWN) {
+        document.getElementById("msg").textContent = "Bitte 1 Sekunde warten...";
+        return;
+    }
+    lastTry = now;
+
+    const val = document.getElementById("pw").value;
+    if (val === PASS) {
+        sessionStorage.setItem("access", Date.now());
+        window.location.href = "geheim.html";
+    } else {
+        document.getElementById("msg").textContent = "Falsches Passwort";
+    }
+}
+</script>
+</body>
+</html>
+
+
+<!-- SECRET PAGE (geheim.html) -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Exklusive Wohnungen</title>
+<style>
+  body { font-family: Arial; background:#f0f0f0; padding:30px; }
+  .flat { background:white; padding:20px; border-radius:10px; margin-bottom:20px; box-shadow:0 0 8px rgba(0,0,0,0.15); }
+  img { width:100%; border-radius:10px; }
+  h2 { margin-top:5px; }
+  button { padding:10px 20px; margin-top:20px; cursor:pointer; }
+</style>
+</head>
+<body>
+<script>
+const SESSION_TIME = 30 * 60 * 1000; // 30min
+const loginTime = parseInt(sessionStorage.getItem("access"));
+if (!loginTime || Date.now() - loginTime > SESSION_TIME) {
+    alert("Session abgelaufen – bitte erneut einloggen.");
+    window.location.href = "index.html";
+}
+let timer;
+function reset() {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+        alert("30 Minuten Inaktivität – Bereich gesperrt.");
+        sessionStorage.removeItem("access");
+        window.location.href = "index.html";
+    }, SESSION_TIME);
+}
+reset();
+document.onmousemove = reset;
+document.onkeypress = reset;
+document.onclick = reset;
+document.onscroll = reset;
+</script>
+
+<h1>Exklusive Wohnungsangebote</h1>
+<p>Nur sichtbar für authentifizierte Kunden.</p>
+
+<div class="flat">
+  <img src="https://via.placeholder.com/800x400" />
+  <h2>Moderne 3-Zimmer Wohnung</h2>
+  <p>85 m² · 1.250€ Kaltmiete · Stadtzentrum</p>
+  <button>Anfrage senden</button>
+</div>
+
+<div class="flat">
+  <img src="https://via.placeholder.com/800x400" />
+  <h2>Exklusive Penthouse Suite</h2>
+  <p>140 m² · 2.800€ Kaltmiete · Blick über die Stadt</p>
+  <button>Anfrage senden</button>
+</div>
+
+<div class="flat">
+  <img src="https://via.placeholder.com/800x400" />
+  <h2>Gemütliche Wohnung für Singles</h2>
+  <p>45 m² · 720€ Kaltmiete · Ruhige Lage</p>
+  <button>Anfrage senden</button>
+</div>
+
+<br />
+<button onclick="sessionStorage.removeItem('access'); window.location.href='index.html'">Logout</button>
+
+</body>
+</html>
