@@ -4,13 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login – Geschützter Bereich</title>
-<style>
-  body { font-family: Arial; background:#f5f5f5; padding:40px; }
-  .box { max-width:400px; margin:auto; background:white; padding:25px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.2); }
-  input { width:100%; padding:10px; margin-top:10px; }
-  button { padding:10px; width:100%; margin-top:10px; cursor:pointer; }
-  .error { color:red; margin-top:10px; }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="box">
@@ -21,10 +15,22 @@
   <p id="msg" class="error"></p>
 </div>
 <script>
-const PASS = "1234Test";
+// Password is stored as SHA-256 hash (hashed value of "1234Test")
+// This prevents the password from being visible in plain text
+const PASS_HASH = "0d214e3d94bb80f70deffda9bd7a530fb8369e4d6e0586e13348eb4cfa7d9a52";
 const COOLDOWN = 1000;
 let lastTry = 0;
-function login() {
+
+// SHA-256 hashing function
+async function hashPassword(password) {
+    const msgBuffer = new TextEncoder().encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
+async function login() {
     const now = Date.now();
     if (now - lastTry < COOLDOWN) {
         document.getElementById("msg").textContent = "Bitte 1 Sekunde warten...";
@@ -32,7 +38,9 @@ function login() {
     }
     lastTry = now;
     const val = document.getElementById("pw").value;
-    if (val === PASS) {
+    const hashedInput = await hashPassword(val);
+    
+    if (hashedInput === PASS_HASH) {
         sessionStorage.setItem("access", Date.now());
         window.location.href = "geheim.html";
     } else {
