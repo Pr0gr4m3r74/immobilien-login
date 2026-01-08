@@ -107,7 +107,7 @@ document.onscroll = reset;
         </div>
          <div class="form-row two-cols">
            <button type="submit" id="submitBtn">Angebot anlegen</button>
-           <button type="button" id="cancelEdit" class="ghost">Abbrechen</button>
+           <button type="button" id="cancelEdit" class="ghost" hidden>Abbrechen</button>
          </div>
          <button type="button" id="exportBtn" class="secondary">Datei mit Angeboten erstellen</button>
          <p class="form-feedback" id="formFeedback"></p>
@@ -252,7 +252,7 @@ document.onscroll = reset;
   }
 
   function normalizeProperty(p) {
-    const images = normalizeImages((p && p.images || []).join ? p.images.join(",") : p.images);
+    const images = normalizeImages(Array.isArray(p?.images) ? p.images.join(",") : p?.images);
     const descriptionHtml = p.descriptionHtml || (p.description ? sanitizeHtml((p.description || "").replace(/\n/g, "<br>")) : "");
     return {
       id: p.id || createId(),
@@ -403,7 +403,7 @@ document.onscroll = reset;
     document.getElementById("addForm").reset();
     setEditorContent("");
     document.getElementById("submitBtn").textContent = "Angebot anlegen";
-    document.getElementById("cancelEdit").classList.add("ghost");
+    document.getElementById("cancelEdit").hidden = true;
   }
 
   function startEdit(property) {
@@ -414,7 +414,7 @@ document.onscroll = reset;
     setEditorContent(property.descriptionHtml || sanitizeHtml(property.description || ""));
     document.getElementById("images").value = (property.images || []).join(", ");
     document.getElementById("submitBtn").textContent = "Angebot aktualisieren";
-    document.getElementById("cancelEdit").classList.remove("ghost");
+    document.getElementById("cancelEdit").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
