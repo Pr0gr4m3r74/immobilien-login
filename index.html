@@ -16,14 +16,15 @@
     <button onclick="login('customer')">Kunden Login</button>
     <button class="secondary" onclick="login('admin')">Admin Anmeldung</button>
   </div>
-  <p class="hint center">Admins nutzen das gleiche Passwort, erhalten aber die Bearbeitungssicht.</p>
+  <p class="hint center">Admins nutzen ihr Admin-Passwort und erhalten die Bearbeitungssicht.</p>
   <p id="msg" class="error"></p>
 </div>
 <script>
 // Password is stored as SHA-256 hash (hashed value of "1234Test")
 // This prevents the password from being visible in plain text
 const PASS_HASH = "0d214e3d94bb80f70deffda9bd7a530fb8369e4d6e0586e13348eb4cfa7d9a52";
-const ADMIN_HASH = PASS_HASH;
+// Admin password hash of "Admin123!"
+const ADMIN_HASH = "3eb3fe66b31e3b4d10fa70b5cad49c7112294af6ae4e476a1c405155d45aa121";
 const COOLDOWN = 1000;
 let lastTry = 0;
 

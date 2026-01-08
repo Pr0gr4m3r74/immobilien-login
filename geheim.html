@@ -23,6 +23,7 @@ function reset() {
     timer = setTimeout(() => {
         alert("30 Minuten Inaktivität – Bereich gesperrt.");
         sessionStorage.removeItem("access");
+        sessionStorage.removeItem("role");
         window.location.href = "index.html";
     }, SESSION_TIME);
 }
