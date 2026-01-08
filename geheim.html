@@ -9,11 +9,14 @@
 <body class="protected-body">
 <script>
 const SESSION_TIME = 30 * 60 * 1000; // 30min
+const role = sessionStorage.getItem("role");
 const loginTime = parseInt(sessionStorage.getItem("access"));
-if (!loginTime || Date.now() - loginTime > SESSION_TIME) {
+if (!loginTime || Date.now() - loginTime > SESSION_TIME || !role) {
     alert("Session abgelaufen – bitte erneut einloggen.");
     window.location.href = "index.html";
 }
+const isAdmin = role === "admin";
+document.body.classList.add(isAdmin ? "role-admin" : "role-customer");
 let timer;
 function reset() {
     clearTimeout(timer);
@@ -33,15 +36,16 @@ document.onscroll = reset;
 <div class="page">
   <header class="top-bar">
     <div>
-      <p class="eyebrow">Verkaufsübersicht</p>
-      <h1>Exklusive Wohnungsangebote</h1>
-      <p class="subline">Scrollen, anklicken, Galerie öffnen – alle Verkäufe im Blick und blitzschnell verwalten.</p>
+      <p class="eyebrow" id="viewEyebrow">Verkaufsübersicht</p>
+      <h1 id="viewTitle">Exklusive Wohnungsangebote</h1>
+      <p class="subline" id="viewSubline">Scrollen, anklicken, Galerie öffnen – alle Verkäufe im Blick.</p>
+      <span class="pill soft mode-indicator" id="modeIndicator">Kundenansicht</span>
     </div>
-    <button class="logout" onclick="sessionStorage.removeItem('access'); window.location.href='index.html'">Logout</button>
+    <button class="logout" onclick="sessionStorage.removeItem('access'); sessionStorage.removeItem('role'); window.location.href='index.html'">Logout</button>
   </header>
 
   <section class="grid">
-    <article class="card highlight">
+    <article class="card highlight admin-only" id="adminPanel">
       <div class="card-header">
         <div>
           <p class="eyebrow">Neues Angebot</p>
@@ -246,17 +250,18 @@ document.onscroll = reset;
       e.stopPropagation();
       openModal(property);
     });
-
-    const removeBtn = document.createElement("button");
-    removeBtn.textContent = "Entfernen";
-    removeBtn.className = "danger";
-    removeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      removeProperty(property.id);
-    });
-
     actions.appendChild(openBtn);
-    actions.appendChild(removeBtn);
+
+    if (isAdmin) {
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "Entfernen";
+      removeBtn.className = "danger";
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removeProperty(property.id);
+      });
+      actions.appendChild(removeBtn);
+    }
     card.appendChild(actions);
 
     card.addEventListener("click", () => openModal(property));
@@ -318,38 +323,40 @@ document.onscroll = reset;
     updateModal();
   }
 
-  document.getElementById("addForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = document.getElementById("name").value.trim();
-    const address = document.getElementById("address").value.trim();
-    const price = document.getElementById("price").value.trim();
-    const description = document.getElementById("description").value.trim();
-    const images = normalizeImages(document.getElementById("images").value);
-    const feedback = document.getElementById("formFeedback");
+  if (isAdmin) {
+    document.getElementById("addForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const price = document.getElementById("price").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const images = normalizeImages(document.getElementById("images").value);
+      const feedback = document.getElementById("formFeedback");
 
-    if (name === "" || address === "" || description === "") {
-      feedback.textContent = "Bitte Objektname, Adresse und Beschreibung ausfüllen.";
-      feedback.classList.add("error");
-      return;
-    }
+      if (name === "" || address === "" || description === "") {
+        feedback.textContent = "Bitte Objektname, Adresse und Beschreibung ausfüllen.";
+        feedback.classList.add("error");
+        return;
+      }
 
-    const newProperty = {
-      id: createId(),
-      name,
-      address,
-      price: price || "Preis auf Anfrage",
-      description,
-      images
-    };
+      const newProperty = {
+        id: createId(),
+        name,
+        address,
+        price: price || "Preis auf Anfrage",
+        description,
+        images
+      };
 
-    properties.unshift(newProperty);
-    persistProperties();
-    renderProperties();
+      properties.unshift(newProperty);
+      persistProperties();
+      renderProperties();
 
-    e.target.reset();
-    feedback.textContent = "Angebot gespeichert.";
-    feedback.classList.remove("error");
-  });
+      e.target.reset();
+      feedback.textContent = "Angebot gespeichert.";
+      feedback.classList.remove("error");
+    });
+  }
 
   document.getElementById("closeModal").addEventListener("click", closeModal);
   document.getElementById("nextImg").addEventListener("click", nextImage);
@@ -357,6 +364,24 @@ document.onscroll = reset;
   document.getElementById("detailModal").addEventListener("click", (e) => {
     if (e.target.id === "detailModal") closeModal();
   });
+
+  const indicator = document.getElementById("modeIndicator");
+  if (indicator) {
+    indicator.textContent = isAdmin ? "Adminansicht" : "Kundenansicht";
+    if (isAdmin) indicator.classList.add("accent");
+  }
+  const eyebrow = document.getElementById("viewEyebrow");
+  const title = document.getElementById("viewTitle");
+  const subline = document.getElementById("viewSubline");
+  if (!isAdmin) {
+    eyebrow.textContent = "Kundenbereich";
+    title.textContent = "Verfügbare Wohnungen";
+    subline.textContent = "Angebote ansehen, Details öffnen, Galerie stöbern – ohne Bearbeitung.";
+  } else {
+    eyebrow.textContent = "Adminbereich";
+    title.textContent = "Exklusive Wohnungsangebote verwalten";
+    subline.textContent = "Angebote pflegen, Bilder hinterlegen, löschen oder neu anlegen.";
+  }
 
   properties = loadProperties();
   renderProperties();
