@@ -5,19 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login – Geschützter Bereich</title>
 <link rel="stylesheet" href="styles.css">
+<script src="auth.js"></script>
 </head>
 <body>
 <div class="box">
-  <h2>Geschützter Kundenbereich</h2>
-  <p>Bitte Passwort eingeben, um exklusive Wohnungsangebote zu sehen.</p>
-  <input type="password" id="pw" placeholder="Passwort">
-  <button onclick="login()">Login</button>
+  <h2>Willkommen bei Immobilien Login</h2>
+  <p>Als Kunde sehen Sie mit Passwort sofort die verfügbaren Wohnungen. Admins verwalten Angebote über die separate Anmeldung.</p>
+  <label for="pw" class="sr-only">Passwort für Kunden oder Admin</label>
+  <input type="password" id="pw" placeholder="Passwort eingeben (Kunde oder Admin)">
+  <div class="action-row">
+    <button onclick="login('customer')">Kunden Login</button>
+    <button class="secondary" onclick="login('admin')">Admin Anmeldung</button>
+  </div>
+  <p class="hint center">Admins nutzen ihr Admin-Passwort und erhalten die Bearbeitungssicht.</p>
   <p id="msg" class="error"></p>
 </div>
 <script>
-// Password is stored as SHA-256 hash (hashed value of "1234Test")
-// This prevents the password from being visible in plain text
-const PASS_HASH = "0d214e3d94bb80f70deffda9bd7a530fb8369e4d6e0586e13348eb4cfa7d9a52";
 const COOLDOWN = 1000;
 let lastTry = 0;
 
@@ -30,23 +33,40 @@ async function hashPassword(password) {
     return hashHex;
 }
 
-async function login() {
+function setSession(role, credentialHash) {
+    sessionStorage.setItem("access", Date.now());
+    sessionStorage.setItem("role", role);
+    sessionStorage.setItem("credentialHash", credentialHash);
+    window.location.href = "geheim.html";
+}
+
+async function login(role = "customer") {
     const now = Date.now();
     if (now - lastTry < COOLDOWN) {
         document.getElementById("msg").textContent = "Bitte 1 Sekunde warten...";
         return;
     }
     lastTry = now;
-    const val = document.getElementById("pw").value;
+    const val = document.getElementById("pw").value.trim();
+    if (!val) {
+        document.getElementById("msg").textContent = "Bitte Passwort eingeben.";
+        return;
+    }
     const hashedInput = await hashPassword(val);
+    const target = role === "admin" ? ADMIN_HASH : PASS_HASH;
     
-    if (hashedInput === PASS_HASH) {
-        sessionStorage.setItem("access", Date.now());
-        window.location.href = "geheim.html";
+    if (hashedInput === target) {
+        setSession(role, hashedInput);
     } else {
         document.getElementById("msg").textContent = "Falsches Passwort";
     }
 }
+
+document.getElementById("pw").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    login("customer");
+  }
+});
 </script>
 </body>
 </html>
