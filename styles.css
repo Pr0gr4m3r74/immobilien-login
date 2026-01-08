@@ -297,6 +297,12 @@ h1 {
   border: 1px solid var(--medium-gray);
 }
 
+button.ghost {
+  background: transparent;
+  color: var(--dark-bg);
+  border: 1px solid var(--medium-gray);
+}
+
 .card-actions .danger {
   background: linear-gradient(135deg, #EF4444, #DC2626);
   color: #fff;
@@ -355,6 +361,40 @@ textarea:focus {
 .form-feedback.error {
   color: #D32F2F;
   font-weight: 600;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.editor-toolbar button,
+.editor-toolbar select {
+  width: auto;
+  margin-top: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.rich-editor {
+  min-height: 120px;
+  border: 2px solid var(--medium-gray);
+  border-radius: 8px;
+  padding: 12px 15px;
+  background: #fff;
+  font-size: 16px;
+}
+
+.rich-editor:focus {
+  outline: none;
+  border-color: var(--primary-yellow);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.rich-editor:empty:before {
+  content: attr(placeholder);
+  color: var(--muted);
 }
 
 /* Logout Button */
