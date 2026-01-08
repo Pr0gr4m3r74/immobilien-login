@@ -4,13 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Exklusive Wohnungen</title>
-<style>
-  body { font-family: Arial; background:#f0f0f0; padding:30px; }
-  .flat { background:white; padding:20px; border-radius:10px; margin-bottom:20px; box-shadow:0 0 8px rgba(0,0,0,0.15); }
-  img { width:100%; border-radius:10px; }
-  h2 { margin-top:5px; }
-  button { padding:10px 20px; margin-top:20px; cursor:pointer; }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <script>
@@ -61,7 +55,7 @@ document.onscroll = reset;
 </div>
 
 <br>
-<button onclick="sessionStorage.removeItem('access'); window.location.href='index.html'">Logout</button>
+<button class="logout" onclick="sessionStorage.removeItem('access'); window.location.href='index.html'">Logout</button>
 
 </body>
 </html>

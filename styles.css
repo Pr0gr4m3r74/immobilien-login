@@ -1,0 +1,192 @@
+/* Immobilien Login - Stylesheet */
+/* Color scheme: White/Gray and Yellow/Dark */
+
+:root {
+  --primary-yellow: #FFD700;
+  --dark-yellow: #FFA500;
+  --dark-bg: #2C2C2C;
+  --light-gray: #F5F5F5;
+  --medium-gray: #E0E0E0;
+  --white: #FFFFFF;
+  --text-dark: #333333;
+  --shadow: rgba(0, 0, 0, 0.2);
+  --shadow-light: rgba(0, 0, 0, 0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  background: linear-gradient(135deg, var(--light-gray) 0%, var(--medium-gray) 100%);
+  padding: 40px 20px;
+  min-height: 100vh;
+  color: var(--text-dark);
+}
+
+/* Login Box Styles */
+.box {
+  max-width: 400px;
+  margin: auto;
+  background: var(--white);
+  padding: 35px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px var(--shadow);
+  border-top: 5px solid var(--primary-yellow);
+}
+
+.box h2 {
+  color: var(--dark-bg);
+  margin-bottom: 15px;
+  font-size: 24px;
+  text-align: center;
+}
+
+.box p {
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Input Styles */
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 12px 15px;
+  margin-top: 10px;
+  border: 2px solid var(--medium-gray);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: var(--white);
+}
+
+input[type="password"]:focus,
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--primary-yellow);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+/* Button Styles */
+button {
+  padding: 12px 20px;
+  width: 100%;
+  margin-top: 15px;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--primary-yellow) 0%, var(--dark-yellow) 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--dark-bg);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px var(--shadow-light);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px var(--shadow);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Error Message */
+.error {
+  color: #D32F2F;
+  margin-top: 15px;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Protected Area Styles */
+h1 {
+  color: var(--dark-bg);
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 32px;
+  border-bottom: 3px solid var(--primary-yellow);
+  padding-bottom: 15px;
+}
+
+/* Flat/Apartment Card Styles */
+.flat {
+  background: var(--white);
+  padding: 25px;
+  border-radius: 15px;
+  margin-bottom: 25px;
+  box-shadow: 0 5px 20px var(--shadow-light);
+  transition: all 0.3s ease;
+  border-left: 5px solid var(--primary-yellow);
+}
+
+.flat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.flat img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.flat h2 {
+  color: var(--dark-bg);
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 22px;
+}
+
+.flat p {
+  color: var(--text-dark);
+  line-height: 1.8;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.flat button {
+  width: auto;
+  padding: 10px 25px;
+  margin-top: 10px;
+}
+
+/* Logout Button */
+button.logout {
+  background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a1a 100%);
+  color: var(--white);
+  max-width: 200px;
+  margin: 30px auto;
+  display: block;
+}
+
+button.logout:hover {
+  background: linear-gradient(135deg, #1a1a1a 0%, var(--dark-bg) 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  body {
+    padding: 20px 10px;
+  }
+  
+  .box {
+    padding: 25px 20px;
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+  
+  .flat h2 {
+    font-size: 20px;
+  }
+}
