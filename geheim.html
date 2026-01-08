@@ -6,7 +6,7 @@
 <title>Exklusive Wohnungen</title>
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="protected-body">
 <script>
 const SESSION_TIME = 30 * 60 * 1000; // 30min
 const loginTime = parseInt(sessionStorage.getItem("access"));
@@ -30,32 +30,336 @@ document.onclick = reset;
 document.onscroll = reset;
 </script>
 
-<h1>Exklusive Wohnungsangebote</h1>
-<p>Nur sichtbar für authentifizierte Kunden.</p>
+<div class="page">
+  <header class="top-bar">
+    <div>
+      <p class="eyebrow">Verkaufsübersicht</p>
+      <h1>Exklusive Wohnungsangebote</h1>
+      <p class="subline">Scrollen, anklicken, Galerie öffnen – alle Verkäufe im Blick und blitzschnell verwalten.</p>
+    </div>
+    <button class="logout" onclick="sessionStorage.removeItem('access'); window.location.href='index.html'">Logout</button>
+  </header>
 
-<div class="flat">
-  <img src="https://via.placeholder.com/800x400">
-  <h2>Moderne 3-Zimmer Wohnung</h2>
-  <p>85 m² · 1.250€ Kaltmiete · Stadtzentrum</p>
-  <button>Anfrage senden</button>
+  <section class="grid">
+    <article class="card highlight">
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">Neues Angebot</p>
+          <h2>Schnell Wohnung einstellen</h2>
+          <p class="subline">Name, Adresse, Text & Bilder eintragen – fertig. Änderungen bleiben lokal gespeichert.</p>
+        </div>
+        <span class="pill">2 Klicks zum Inserat</span>
+      </div>
+      <form id="addForm" class="form">
+        <div class="form-row">
+          <label>Objektname*</label>
+          <input type="text" id="name" required placeholder="z.B. Sonnenhof Apartment">
+        </div>
+        <div class="form-row two-cols">
+          <div>
+            <label>Adresse*</label>
+            <input type="text" id="address" required placeholder="Straße, PLZ Ort">
+          </div>
+          <div>
+            <label>Preis / Eckdaten</label>
+            <input type="text" id="price" placeholder="Kaufpreis, Fläche, Zimmer">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Beschreibung*</label>
+          <textarea id="description" required rows="3" placeholder="Kurzer Verkaufstext"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Bild-URLs (kommagetrennt)</label>
+          <input type="text" id="images" placeholder="https://... , https://...">
+          <p class="hint">Ohne Eingabe wird automatisch ein stilvolles Standardbild genutzt.</p>
+        </div>
+        <button type="submit">Angebot anlegen</button>
+        <p class="form-feedback" id="formFeedback"></p>
+      </form>
+    </article>
+
+    <article class="card">
+      <div class="list-header">
+        <div>
+          <p class="eyebrow">Verkäufe</p>
+          <h2>Alle Objekte</h2>
+          <p class="subline">Klicke auf eine Karte, um Bilder & Beschreibung zu sehen. Entfernen ist jederzeit möglich.</p>
+        </div>
+        <span class="pill soft">Klicken für Details</span>
+      </div>
+      <div id="propertyList" class="property-list"></div>
+    </article>
+  </section>
 </div>
 
-<div class="flat">
-  <img src="https://via.placeholder.com/800x400">
-  <h2>Exklusive Penthouse Suite</h2>
-  <p>140 m² · 2.800€ Kaltmiete · Blick über die Stadt</p>
-  <button>Anfrage senden</button>
+<div id="detailModal" class="modal hidden">
+  <div class="modal-content">
+    <button class="close" id="closeModal" aria-label="Modal schließen">&times;</button>
+    <div class="modal-gallery">
+      <button class="nav prev" id="prevImg" aria-label="Vorheriges Bild">&lsaquo;</button>
+      <img id="modalImage" src="" alt="Wohnung Bild">
+      <button class="nav next" id="nextImg" aria-label="Nächstes Bild">&rsaquo;</button>
+    </div>
+    <div class="modal-meta">
+      <div>
+        <p class="eyebrow" id="modalAddress"></p>
+        <h3 id="modalTitle"></h3>
+        <p class="price" id="modalPrice"></p>
+      </div>
+      <span class="pill accent" id="modalCounter"></span>
+    </div>
+    <p id="modalDescription" class="modal-description"></p>
+  </div>
 </div>
 
-<div class="flat">
-  <img src="https://via.placeholder.com/800x400">
-  <h2>Gemütliche Wohnung für Singles</h2>
-  <p>45 m² · 720€ Kaltmiete · Ruhige Lage</p>
-  <button>Anfrage senden</button>
-</div>
+<script>
+  const makePlaceholder = (text, bg, fg = "#111827") =>
+    `data:image/svg+xml,${encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 360'><rect width='600' height='360' rx='24' fill='${bg}'/><text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' font-size='46' font-family='Inter,Arial' fill='${fg}' opacity='0.82'>${text}</text></svg>`
+    )}`;
 
-<br>
-<button class="logout" onclick="sessionStorage.removeItem('access'); window.location.href='index.html'">Logout</button>
+  const CONFIG = {
+    FALLBACK_IMAGE: makePlaceholder("Vorschau", "#FACC15"),
+    BLOCKED_IMAGE_HOST: "images.unsplash.com"
+  };
+  const SAMPLE_IMAGES = [
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g2' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%234F46E5'/%3E%3Cstop offset='100%25' stop-color='%238B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='720' rx='24' fill='url(%23g2)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='54' font-family='Inter,Arial' fill='%23F9FAFB' opacity='0.9'%3ESonnenhof%3C/text%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g3' x1='0' y1='1' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%230EA5E9'/%3E%3Cstop offset='100%25' stop-color='%23111827'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='720' rx='24' fill='url(%23g3)'/%3E%3Ctext x='50%25' y='52%25' dominant-baseline='middle' text-anchor='middle' font-size='46' font-family='Inter,Arial' fill='%23E0F2FE' opacity='0.9'%3EWohnung%20Galerie%3C/text%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g4' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%23F97316'/%3E%3Cstop offset='100%25' stop-color='%23FACC15'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='720' rx='24' fill='url(%23g4)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' font-family='Inter,Arial' fill='%23111827' opacity='0.88'%3EModern%20Living%3C/text%3E%3C/svg%3E"
+  ];
+  const STORAGE_KEY = "properties-for-sale";
+  const sampleProperty = {
+    id: "obj-001",
+    name: "Sonnenhof Apartment",
+    address: "Sonnenweg 12, 70173 Stuttgart",
+    price: "Kaufpreis: 482.000 € · 96 m² · 3 Zimmer",
+    description: "Lichtdurchflutete Wohnung mit bodentiefen Fenstern, Eichenparkett und großzügigem Süd-Balkon. Ideal für Paare, die modernes Design und kurze Wege in die City schätzen.",
+    images: SAMPLE_IMAGES
+  };
 
+  let properties = [];
+  let activeProperty = null;
+  let activeImageIndex = 0;
+
+  const isBlockedImage = (src) => {
+    if (!src) return false;
+    try {
+      return new URL(src).host === CONFIG.BLOCKED_IMAGE_HOST;
+    } catch {
+      return false;
+    }
+  };
+
+  const hasBlockedImages = (list) => {
+    for (const p of list) {
+      for (const src of p.images || []) {
+        if (isBlockedImage(src)) return true;
+      }
+    }
+    return false;
+  };
+
+  let idCounter = 0;
+  const nextCounter = () => {
+    idCounter += 1;
+    return idCounter;
+  };
+  const createId = () => {
+    if (crypto.randomUUID) return `obj-${crypto.randomUUID()}`;
+    if (crypto.getRandomValues) {
+      const buf = new Uint32Array(2);
+      crypto.getRandomValues(buf);
+      return `obj-${buf[0].toString(16)}${buf[1].toString(16)}`;
+    }
+    return `obj-${Date.now().toString(36)}-${nextCounter()}-${Math.random().toString(36).slice(2, 6)}`;
+  };
+
+  function loadProperties() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) throw new Error("no data");
+      const saved = JSON.parse(raw);
+      if (Array.isArray(saved) && saved.length) {
+        if (!hasBlockedImages(saved)) {
+          return saved;
+        }
+      }
+    } catch (e) {
+      localStorage.removeItem(STORAGE_KEY); // reset corrupted state
+    }
+    const fresh = [sampleProperty];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+    return fresh;
+  }
+
+  function persistProperties() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(properties));
+  }
+
+  function normalizeImages(input) {
+    const urls = (input || "")
+      .split(",")
+      .map((u) => u.trim())
+      .filter(Boolean);
+    return urls.length ? urls : [CONFIG.FALLBACK_IMAGE];
+  }
+
+  function createCard(property) {
+    const card = document.createElement("article");
+    card.className = "property-card";
+
+    const img = document.createElement("img");
+    img.src = property.images[0] || CONFIG.FALLBACK_IMAGE;
+    img.alt = property.name;
+    img.onerror = () => (img.src = CONFIG.FALLBACK_IMAGE);
+    img.className = "thumb";
+    card.appendChild(img);
+
+    const badge = document.createElement("span");
+    badge.className = "pill accent floating";
+    badge.textContent = "Verkauf";
+    card.appendChild(badge);
+
+    const body = document.createElement("div");
+    body.className = "property-body";
+    const address = document.createElement("p");
+    address.className = "eyebrow";
+    address.textContent = property.address;
+    const title = document.createElement("h3");
+    title.textContent = property.name;
+    const price = document.createElement("p");
+    price.className = "price";
+    price.textContent = property.price || "Preis auf Anfrage";
+    const teaser = document.createElement("p");
+    teaser.className = "teaser";
+    teaser.textContent = property.description;
+    body.append(address, title, price, teaser);
+    card.appendChild(body);
+
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
+    const openBtn = document.createElement("button");
+    openBtn.textContent = "Details & Galerie";
+    openBtn.className = "ghost";
+    openBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openModal(property);
+    });
+
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "Entfernen";
+    removeBtn.className = "danger";
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeProperty(property.id);
+    });
+
+    actions.appendChild(openBtn);
+    actions.appendChild(removeBtn);
+    card.appendChild(actions);
+
+    card.addEventListener("click", () => openModal(property));
+    return card;
+  }
+
+  function renderProperties() {
+    const list = document.getElementById("propertyList");
+    list.innerHTML = "";
+    if (!properties.length) {
+      const empty = document.createElement("p");
+      empty.className = "hint";
+      empty.textContent = "Noch keine Angebote. Mit dem Formular oben in Sekunden hinzufügen.";
+      list.appendChild(empty);
+      return;
+    }
+    properties.forEach((prop) => list.appendChild(createCard(prop)));
+  }
+
+  function removeProperty(id) {
+    properties = properties.filter((p) => p.id !== id);
+    persistProperties();
+    renderProperties();
+  }
+
+  function openModal(property) {
+    activeProperty = property;
+    activeImageIndex = 0;
+    updateModal();
+    document.getElementById("detailModal").classList.remove("hidden");
+  }
+
+  function closeModal() {
+    document.getElementById("detailModal").classList.add("hidden");
+  }
+
+  function updateModal() {
+    if (!activeProperty) return;
+    const imgEl = document.getElementById("modalImage");
+    imgEl.src = activeProperty.images[activeImageIndex] || CONFIG.FALLBACK_IMAGE;
+    imgEl.onerror = () => (imgEl.src = CONFIG.FALLBACK_IMAGE);
+
+    document.getElementById("modalTitle").textContent = activeProperty.name;
+    document.getElementById("modalAddress").textContent = activeProperty.address;
+    document.getElementById("modalPrice").textContent = activeProperty.price || "Preis auf Anfrage";
+    document.getElementById("modalDescription").textContent = activeProperty.description;
+    document.getElementById("modalCounter").textContent = `${activeImageIndex + 1} / ${activeProperty.images.length}`;
+  }
+
+  function nextImage() {
+    if (!activeProperty) return;
+    activeImageIndex = (activeImageIndex + 1) % activeProperty.images.length;
+    updateModal();
+  }
+
+  function prevImage() {
+    if (!activeProperty) return;
+    activeImageIndex = (activeImageIndex - 1 + activeProperty.images.length) % activeProperty.images.length;
+    updateModal();
+  }
+
+  document.getElementById("addForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const address = document.getElementById("address").value.trim();
+    const price = document.getElementById("price").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const images = normalizeImages(document.getElementById("images").value);
+    const feedback = document.getElementById("formFeedback");
+
+    if (name === "" || address === "" || description === "") {
+      feedback.textContent = "Bitte Objektname, Adresse und Beschreibung ausfüllen.";
+      feedback.classList.add("error");
+      return;
+    }
+
+    const newProperty = {
+      id: createId(),
+      name,
+      address,
+      price: price || "Preis auf Anfrage",
+      description,
+      images
+    };
+
+    properties.unshift(newProperty);
+    persistProperties();
+    renderProperties();
+
+    e.target.reset();
+    feedback.textContent = "Angebot gespeichert.";
+    feedback.classList.remove("error");
+  });
+
+  document.getElementById("closeModal").addEventListener("click", closeModal);
+  document.getElementById("nextImg").addEventListener("click", nextImage);
+  document.getElementById("prevImg").addEventListener("click", prevImage);
+  document.getElementById("detailModal").addEventListener("click", (e) => {
+    if (e.target.id === "detailModal") closeModal();
+  });
+
+  properties = loadProperties();
+  renderProperties();
+</script>
 </body>
 </html>
