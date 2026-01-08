@@ -1,3 +1,3 @@
 // Shared credential hashes
-const PASS_HASH = "0d214e3d94bb80f70deffda9bd7a530fb8369e4d6e0586e13348eb4cfa7d9a52"; // "1234Test"
-const ADMIN_HASH = "3eb3fe66b31e3b4d10fa70b5cad49c7112294af6ae4e476a1c405155d45aa121"; // "Admin123!"
+const PASS_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // "1234"
+const ADMIN_HASH = "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"; // "Admin"
