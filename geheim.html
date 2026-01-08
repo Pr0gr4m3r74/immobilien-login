@@ -5,17 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Exklusive Wohnungen</title>
 <link rel="stylesheet" href="styles.css">
+<script src="auth.js"></script>
 </head>
 <body class="protected-body">
 <script>
 const SESSION_TIME = 30 * 60 * 1000; // 30min
 const role = sessionStorage.getItem("role");
+const credentialHash = sessionStorage.getItem("credentialHash");
 const loginTime = parseInt(sessionStorage.getItem("access"));
-if (!loginTime || Date.now() - loginTime > SESSION_TIME || !role) {
+const isCustomerSession = role === "customer" && credentialHash === PASS_HASH;
+const isAdminSession = role === "admin" && credentialHash === ADMIN_HASH;
+if (!loginTime || Date.now() - loginTime > SESSION_TIME || (!isCustomerSession && !isAdminSession)) {
     alert("Session abgelaufen – bitte erneut einloggen.");
+    sessionStorage.removeItem("access");
+    sessionStorage.removeItem("role");
+    sessionStorage.removeItem("credentialHash");
     window.location.href = "index.html";
 }
-const isAdmin = role === "admin";
+const isAdmin = isAdminSession;
 document.body.classList.add(isAdmin ? "role-admin" : "role-customer");
 let timer;
 function reset() {
@@ -23,6 +30,7 @@ function reset() {
     timer = setTimeout(() => {
         alert("30 Minuten Inaktivität – Bereich gesperrt.");
         sessionStorage.removeItem("access");
+        sessionStorage.removeItem("credentialHash");
         sessionStorage.removeItem("role");
         window.location.href = "index.html";
     }, SESSION_TIME);
@@ -42,7 +50,7 @@ document.onscroll = reset;
       <p class="subline" id="viewSubline">Scrollen, anklicken, Galerie öffnen – alle Verkäufe im Blick.</p>
       <span class="pill soft mode-indicator" id="modeIndicator">Kundenansicht</span>
     </div>
-    <button class="logout" onclick="sessionStorage.removeItem('access'); sessionStorage.removeItem('role'); window.location.href='index.html'">Logout</button>
+    <button class="logout" onclick="sessionStorage.removeItem('access'); sessionStorage.removeItem('role'); sessionStorage.removeItem('credentialHash'); window.location.href='index.html'">Logout</button>
   </header>
 
   <section class="grid">

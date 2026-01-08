@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login – Geschützter Bereich</title>
 <link rel="stylesheet" href="styles.css">
+<script src="auth.js"></script>
 </head>
 <body>
 <div class="box">
@@ -20,11 +21,6 @@
   <p id="msg" class="error"></p>
 </div>
 <script>
-// Password is stored as SHA-256 hash (hashed value of "1234Test")
-// This prevents the password from being visible in plain text
-const PASS_HASH = "0d214e3d94bb80f70deffda9bd7a530fb8369e4d6e0586e13348eb4cfa7d9a52";
-// Admin password hash of "Admin123!"
-const ADMIN_HASH = "3eb3fe66b31e3b4d10fa70b5cad49c7112294af6ae4e476a1c405155d45aa121";
 const COOLDOWN = 1000;
 let lastTry = 0;
 
@@ -37,9 +33,10 @@ async function hashPassword(password) {
     return hashHex;
 }
 
-function setSession(role) {
+function setSession(role, credentialHash) {
     sessionStorage.setItem("access", Date.now());
     sessionStorage.setItem("role", role);
+    sessionStorage.setItem("credentialHash", credentialHash);
     window.location.href = "geheim.html";
 }
 
@@ -59,7 +56,7 @@ async function login(role = "customer") {
     const target = role === "admin" ? ADMIN_HASH : PASS_HASH;
     
     if (hashedInput === target) {
-        setSession(role);
+        setSession(role, hashedInput);
     } else {
         document.getElementById("msg").textContent = "Falsches Passwort";
     }

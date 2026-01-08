@@ -5,6 +5,7 @@
 :root {
   --primary-yellow: #FACC15;
   --dark-yellow: #EAB308;
+  --dark-yellow-rgb: 234, 179, 8;
   --dark-bg: #0F172A;
   --surface-dark: #1F2937;
   --surface-darker: #0B1223;
@@ -47,8 +48,8 @@ body {
   border-radius: 15px;
   box-shadow: 0 10px 30px var(--shadow);
   border-top: 5px solid var(--primary-yellow);
-  border-left: 1px solid rgba(234, 179, 8, 0.35);
-  border-right: 1px solid rgba(234, 179, 8, 0.35);
+  border-left: 1px solid rgba(var(--dark-yellow-rgb), 0.35);
+  border-right: 1px solid rgba(var(--dark-yellow-rgb), 0.35);
 }
 
 .box h2 {
@@ -201,7 +202,7 @@ h1 {
   padding: 24px;
   border-radius: 16px;
   box-shadow: 0 10px 30px var(--shadow-light);
-  border: 1px solid rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(var(--dark-yellow-rgb), 0.2);
 }
 
 .card.highlight {
