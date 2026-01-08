@@ -97,7 +97,7 @@ document.onscroll = reset;
         <div>
           <p class="eyebrow">Verkäufe</p>
           <h2>Alle Objekte</h2>
-          <p class="subline">Klicke auf eine Karte, um Bilder & Beschreibung zu sehen. Entfernen ist jederzeit möglich.</p>
+          <p class="subline" id="listSubline">Klicke auf eine Karte, um Bilder & Beschreibung zu sehen. Entfernen ist jederzeit möglich.</p>
         </div>
         <span class="pill soft">Klicken für Details</span>
       </div>
@@ -283,7 +283,9 @@ document.onscroll = reset;
     if (!properties.length) {
       const empty = document.createElement("p");
       empty.className = "hint";
-      empty.textContent = "Noch keine Angebote. Mit dem Formular oben in Sekunden hinzufügen.";
+      empty.textContent = isAdmin
+        ? "Noch keine Angebote. Mit dem Formular oben in Sekunden hinzufügen."
+        : "Aktuell keine Angebote verfügbar.";
       list.appendChild(empty);
       return;
     }
@@ -382,14 +384,17 @@ document.onscroll = reset;
   const eyebrow = document.getElementById("viewEyebrow");
   const title = document.getElementById("viewTitle");
   const subline = document.getElementById("viewSubline");
+  const listSubline = document.getElementById("listSubline");
   if (!isAdmin) {
     eyebrow.textContent = "Kundenbereich";
     title.textContent = "Verfügbare Wohnungen";
     subline.textContent = "Angebote ansehen, Details öffnen, Galerie stöbern – ohne Bearbeitung.";
+    if (listSubline) listSubline.textContent = "Klicke auf eine Karte, um Bilder & Beschreibung zu sehen.";
   } else {
     eyebrow.textContent = "Adminbereich";
     title.textContent = "Exklusive Wohnungsangebote verwalten";
     subline.textContent = "Angebote pflegen, Bilder hinterlegen, löschen oder neu anlegen.";
+    if (listSubline) listSubline.textContent = "Klicke auf eine Karte, um Bilder & Beschreibung zu sehen oder zu entfernen.";
   }
 
   properties = loadProperties();
