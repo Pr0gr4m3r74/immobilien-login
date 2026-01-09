@@ -101,9 +101,10 @@ document.onscroll = reset;
            <p class="hint">Text frei formatieren: Schriftart, Größe, Absätze.</p>
          </div>
         <div class="form-row">
-          <label>Bild-URLs (kommagetrennt)</label>
-          <input type="text" id="images" placeholder="https://... , https://...">
-          <p class="hint">Ohne Eingabe wird automatisch ein stilvolles Standardbild genutzt.</p>
+          <label>Bilder hinzufügen</label>
+          <input type="file" id="imageFiles" accept="image/*" multiple>
+          <input type="text" id="images" placeholder="Bilder-URLs (optional)">
+          <p class="hint" id="imageStatus">Bilder können hochgeladen, eingefügt oder per URL angegeben werden. Ohne Auswahl wird das Standardbild genutzt.</p>
         </div>
          <div class="form-row two-cols">
            <button type="submit" id="submitBtn">Angebot anlegen</button>
@@ -177,6 +178,7 @@ document.onscroll = reset;
   let activeProperty = null;
   let activeImageIndex = 0;
   let editingId = null;
+  let formImages = [];
 
   const ALLOWED_TAGS = new Set(["b", "strong", "i", "em", "u", "br", "p", "ul", "ol", "li", "h3", "h4", "span"]);
 
@@ -252,7 +254,7 @@ document.onscroll = reset;
   }
 
   function normalizeProperty(p) {
-    const images = normalizeImages(Array.isArray(p?.images) ? p.images.join(",") : p?.images);
+    const images = normalizeImages(p?.images);
     const descriptionHtml = p.descriptionHtml || (p.description ? sanitizeHtml((p.description || "").replace(/\n/g, "<br>")) : "");
     return {
       id: p.id || createId(),
@@ -262,6 +264,23 @@ document.onscroll = reset;
       descriptionHtml,
       images
     };
+  }
+
+  function parseImageInput(value) {
+    if (!value) return [];
+    const trimmed = typeof value === "string" ? value.trim() : "";
+    if (!trimmed) return [];
+    if (/^data:/i.test(trimmed) && !/,\s*data:/i.test(trimmed)) {
+      return [trimmed];
+    }
+    const parts = trimmed
+      .split(/(?:,\s*(?=(https?:|data:))|\n+)/i)
+      .map((u) => (u || "").trim())
+      .filter(Boolean);
+    if (parts.length === 1 && trimmed.includes(",") && !/^data:/i.test(trimmed)) {
+      return trimmed.split(",").map((u) => (u || "").trim()).filter(Boolean);
+    }
+    return parts;
   }
 
   function loadProperties() {
@@ -298,9 +317,24 @@ document.onscroll = reset;
   }
 
   function normalizeImages(input) {
-    const raw = Array.isArray(input) ? input : (input || "").split(",");
+    const raw = Array.isArray(input) ? input : parseImageInput(input || "");
     const urls = raw.map((u) => (u || "").trim()).filter(Boolean);
     return urls.length ? urls : [CONFIG.FALLBACK_IMAGE];
+  }
+
+  function updateImageStatus(text) {
+    const el = document.getElementById("imageStatus");
+    if (el) el.textContent = text;
+  }
+
+  function filesToDataUrls(files) {
+    const readers = (files || []).map((file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    }));
+    return Promise.all(readers);
   }
 
   function createCard(property) {
@@ -400,10 +434,14 @@ document.onscroll = reset;
 
   function resetForm() {
     editingId = null;
+    formImages = [];
     document.getElementById("addForm").reset();
+    const fileInput = document.getElementById("imageFiles");
+    if (fileInput) fileInput.value = "";
     setEditorContent("");
     document.getElementById("submitBtn").textContent = "Angebot anlegen";
     document.getElementById("cancelEdit").hidden = true;
+    updateImageStatus("Bilder können hochgeladen, eingefügt oder per URL angegeben werden. Ohne Auswahl wird das Standardbild genutzt.");
   }
 
   function startEdit(property) {
@@ -412,7 +450,11 @@ document.onscroll = reset;
     document.getElementById("address").value = property.address || "";
     document.getElementById("price").value = property.price || "";
     setEditorContent(property.descriptionHtml || sanitizeHtml(property.description || ""));
-    document.getElementById("images").value = (property.images || []).join(", ");
+    formImages = normalizeImages(property.images || []);
+    document.getElementById("images").value = "";
+    const fileInput = document.getElementById("imageFiles");
+    if (fileInput) fileInput.value = "";
+    updateImageStatus(`${formImages.length} bestehende Bild(er) geladen. Neue Dateien oder URLs ersetzen die Auswahl.`);
     document.getElementById("submitBtn").textContent = "Angebot aktualisieren";
     document.getElementById("cancelEdit").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -456,7 +498,54 @@ document.onscroll = reset;
 
   if (isAdmin) {
     initEditorTools();
-    document.getElementById("addForm").addEventListener("submit", (e) => {
+    const urlInput = document.getElementById("images");
+    const fileInputEl = document.getElementById("imageFiles");
+
+    if (fileInputEl) {
+      fileInputEl.addEventListener("change", async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) {
+          formImages = [];
+          updateImageStatus("Keine Dateien ausgewählt – URLs oder Standardbild nutzen.");
+          return;
+        }
+        try {
+          const dataUrls = await filesToDataUrls(files);
+          formImages = dataUrls;
+          if (urlInput) urlInput.value = "";
+          updateImageStatus(`${dataUrls.length} Bild(er) hinzugefügt (lokal gespeichert).`);
+        } catch (err) {
+          updateImageStatus("Bilder konnten nicht gelesen werden.");
+        }
+      });
+    }
+
+    if (urlInput) {
+      urlInput.addEventListener("paste", async (e) => {
+        const items = Array.from(e.clipboardData?.items || []).filter((item) => item.type && item.type.startsWith("image/"));
+        if (!items.length) return;
+        e.preventDefault();
+        try {
+          const files = items.map((item) => item.getAsFile()).filter(Boolean);
+          if (!files.length) return;
+          const dataUrls = await filesToDataUrls(files);
+          formImages = dataUrls;
+          if (fileInputEl) fileInputEl.value = "";
+          urlInput.value = "";
+          updateImageStatus(`${dataUrls.length} Bild(er) aus Zwischenablage übernommen.`);
+        } catch (err) {
+          updateImageStatus("Bilder aus der Zwischenablage konnten nicht verarbeitet werden.");
+        }
+      });
+      urlInput.addEventListener("input", () => {
+        if (urlInput.value.trim()) {
+          formImages = [];
+          if (fileInputEl) fileInputEl.value = "";
+          updateImageStatus("URLs werden genutzt. Hochgeladene oder eingefügte Bilder werden ersetzt.");
+        }
+      });
+    }
+    document.getElementById("addForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = document.getElementById("name").value.trim();
       const address = document.getElementById("address").value.trim();
@@ -464,8 +553,28 @@ document.onscroll = reset;
       const descriptionRaw = document.getElementById("descriptionEditor").innerHTML.trim();
       const descriptionSafe = sanitizeHtml(descriptionRaw);
       const descriptionText = htmlToText(descriptionSafe);
-      const images = normalizeImages(document.getElementById("images").value);
+      const urlInputValue = document.getElementById("images").value.trim();
+      const fileInput = document.getElementById("imageFiles");
       const feedback = document.getElementById("formFeedback");
+      let fileImages = formImages;
+
+      if (fileInput && fileInput.files && fileInput.files.length) {
+        try {
+          fileImages = await filesToDataUrls(Array.from(fileInput.files || []));
+          formImages = fileImages;
+          updateImageStatus(`${fileImages.length} Bild(er) hinzugefügt.`);
+        } catch (err) {
+          feedback.textContent = "Bilder konnten nicht geladen werden.";
+          feedback.classList.add("error");
+          return;
+        }
+      }
+
+      const images = fileImages.length
+        ? fileImages
+        : urlInputValue
+          ? normalizeImages(urlInputValue)
+          : normalizeImages(formImages);
 
       if (name === "" || address === "" || descriptionSafe === "") {
         feedback.textContent = "Bitte Objektname, Adresse und Beschreibung ausfüllen.";
