@@ -376,7 +376,7 @@
             <label for="pw">Passwort</label>
             <div class="input-wrapper">
               <input type="password" id="pw" placeholder="Passwort eingeben" required aria-describedby="msgBox">
-              <button type="button" class="toggle-pw" id="togglePw" aria-label="Passwort anzeigen/verbergen">◎</button>
+              <button type="button" class="toggle-pw" id="togglePw" aria-label="Passwort anzeigen">◎</button>
             </div>
           </div>
 
@@ -554,6 +554,7 @@
     var isPassword = pwInput.type === "password";
     pwInput.type = isPassword ? "text" : "password";
     toggleBtn.textContent = isPassword ? "◉" : "◎";
+    toggleBtn.setAttribute("aria-label", isPassword ? "Passwort verbergen" : "Passwort anzeigen");
   });
 
   pwInput.addEventListener("input", function () {
