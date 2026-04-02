@@ -93,6 +93,24 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
+  /* Abwärtskompatible Aliase für alte Variablennamen */
+  --primary-yellow: var(--color-primary);
+  --dark-yellow: var(--color-primary-hover);
+  --dark-yellow-rgb: var(--color-primary-rgb);
+  --dark-bg: var(--color-dark);
+  --surface-dark: var(--color-dark-surface);
+  --surface-darker: #0B1223;
+  --white: var(--color-surface);
+  --text-dark: var(--color-text);
+  --muted: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --medium-gray: var(--color-border);
+  --light-gray: #F3E7C1;
+  --pill-bg: var(--color-accent-light);
+  --pill-border: rgba(16, 185, 129, 0.3);
+  --shadow: rgba(0, 0, 0, 0.2);
+  --shadow-light: rgba(0, 0, 0, 0.12);
+
   /* Layout */
   --header-height: 64px;
   --sidebar-width: 260px;
@@ -116,9 +134,14 @@
 }
 
 html {
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
