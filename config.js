@@ -23,7 +23,9 @@ window.CONFIG = Object.freeze({
   // ACHTUNG: Nur für Demonstrationszwecke!
   // In Produktion kommen diese Werte NICHT ins Frontend.
   credentials: Object.freeze({
+    // Demo-Passwort für Kunden: "1234"
     customerHash: "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    // Demo-Passwort für Admins: "Admin"
     adminHash:    "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
   }),
 
