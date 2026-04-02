@@ -1,73 +1,566 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login – Geschützter Bereich</title>
-<link rel="stylesheet" href="styles.css">
-<script src="config.js"></script>
-<script src="auth.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Immobilien Portal – Sicherer Zugang zu exklusiven Wohnungsangeboten. Melden Sie sich an, um verfügbare Immobilien einzusehen.">
+  <meta name="theme-color" content="#0F172A">
+  <title>Login – Immobilien Portal</title>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Login Page Layout ─────────────────────────────── */
+    body.login-page {
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      background: #F8F9FA;
+    }
+
+    .login-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Left Branding Panel ───────────────────────────── */
+    .brand-panel {
+      flex: 0 0 45%;
+      background: linear-gradient(160deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 600px 600px at 20% 80%, rgba(250,204,21,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 400px at 80% 20%, rgba(250,204,21,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .brand-panel__content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 380px;
+    }
+
+    .brand-panel__icon {
+      font-size: 56px;
+      margin-bottom: 24px;
+      display: block;
+    }
+
+    .brand-panel__title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #FACC15;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .brand-panel__tagline {
+      font-size: 15px;
+      color: #94A3B8;
+      line-height: 1.7;
+    }
+
+    .brand-panel__dots {
+      display: flex;
+      gap: 8px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .brand-panel__dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(250,204,21,0.25);
+    }
+
+    .brand-panel__dots span:first-child {
+      background: #FACC15;
+    }
+
+    /* ── Right Form Panel ──────────────────────────────── */
+    .form-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 48px 32px;
+      position: relative;
+    }
+
+    /* ── Demo Ribbon ───────────────────────────────────── */
+    .demo-ribbon {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      color: #1F2937;
+      text-align: center;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .demo-ribbon.hidden { display: none; }
+
+    body.login-page.has-ribbon .login-shell { padding-top: 38px; }
+
+    /* ── Login Card ────────────────────────────────────── */
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      animation: fadeSlideIn 0.5s ease-out both;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-card__logo {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 44px;
+    }
+
+    .login-card__heading {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--dark-bg);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .login-card__sub {
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    /* ── Form Elements ─────────────────────────────────── */
+    .field-group {
+      margin-bottom: 20px;
+    }
+
+    .field-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      padding: 12px 44px 12px 14px;
+      border: 2px solid #D1D5DB;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fff;
+      color: var(--text-dark);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-top: 0;
+    }
+
+    .input-wrapper input:focus {
+      outline: none;
+      border-color: var(--primary-yellow);
+      box-shadow: 0 0 0 3px rgba(250,204,21,0.18);
+    }
+
+    .input-wrapper input.input-error {
+      border-color: #DC2626;
+      box-shadow: 0 0 0 3px rgba(220,38,38,0.12);
+    }
+
+    .toggle-pw {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--muted);
+      padding: 4px;
+      margin: 0;
+      width: auto;
+      box-shadow: none;
+      line-height: 1;
+    }
+
+    .toggle-pw:hover {
+      color: var(--text-dark);
+      transform: translateY(-50%);
+      box-shadow: none;
+    }
+
+    .toggle-pw:active {
+      transform: translateY(-50%);
+    }
+
+    /* ── Buttons ───────────────────────────────────────── */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      text-align: center;
+      width: 100%;
+      margin: 0;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    .btn:active { transform: translateY(0); }
+
+    .btn--primary {
+      background: linear-gradient(135deg, var(--primary-yellow), var(--dark-yellow));
+      color: var(--dark-bg);
+    }
+
+    .btn--dark {
+      background: linear-gradient(135deg, #1F2937, #111827);
+      color: #FDE68A;
+    }
+
+    /* ── Messages ──────────────────────────────────────── */
+    .msg-box {
+      min-height: 22px;
+      margin-top: 16px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 0;
+      transition: all 0.2s;
+    }
+
+    .msg-box.msg-error {
+      color: #DC2626;
+      background: #FEF2F2;
+      padding: 10px 14px;
+    }
+
+    .msg-box.msg-success {
+      color: #059669;
+      background: #ECFDF5;
+      padding: 10px 14px;
+    }
+
+    .msg-box.msg-cooldown {
+      color: #D97706;
+      background: #FFFBEB;
+      padding: 10px 14px;
+    }
+
+    /* ── Demo Info ─────────────────────────────────────── */
+    .demo-info {
+      margin-top: 24px;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #92400E;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .demo-info.hidden { display: none; }
+
+    .demo-info strong { color: #78350F; }
+
+    .demo-info code {
+      background: rgba(0,0,0,0.06);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .login-footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 12px;
+      color: #9CA3AF;
+    }
+
+    /* ── Mobile ────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .login-shell { flex-direction: column; }
+
+      .brand-panel {
+        flex: none;
+        padding: 32px 24px 28px;
+      }
+
+      .brand-panel__icon { font-size: 36px; margin-bottom: 12px; }
+      .brand-panel__title { font-size: 20px; margin-bottom: 6px; }
+      .brand-panel__tagline { font-size: 13px; }
+      .brand-panel__dots { margin-top: 20px; }
+
+      .form-panel { padding: 32px 20px; }
+
+      .btn-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
-<body>
-<div class="box">
-  <h2>Willkommen bei Immobilien Login</h2>
-  <p>Als Kunde sehen Sie mit Passwort sofort die verfügbaren Wohnungen. Admins verwalten Angebote über die separate Anmeldung.</p>
-  <label for="pw" class="sr-only">Passwort für Kunden oder Admin</label>
-  <input type="password" id="pw" placeholder="Passwort eingeben (Kunde oder Admin)">
-  <div class="action-row">
-    <button onclick="login('customer')">Kunden Login</button>
-    <button class="secondary" onclick="login('admin')">Admin Anmeldung</button>
+<body class="login-page">
+
+  <!-- Demo-Modus Ribbon -->
+  <aside class="demo-ribbon hidden" id="demoRibbon" role="status" aria-label="Demo-Hinweis">
+    ⚡ Demo-Modus – Keine echten Zugangsdaten verwenden
+  </aside>
+
+  <div class="login-shell">
+    <!-- Left branding panel -->
+    <section class="brand-panel" aria-hidden="true">
+      <div class="brand-panel__content">
+        <span class="brand-panel__icon">🏠</span>
+        <h1 class="brand-panel__title" id="brandTitle">Immobilien Portal</h1>
+        <p class="brand-panel__tagline">Exklusive Wohnungsangebote – sicher und bequem auf einen Blick.</p>
+        <div class="brand-panel__dots"><span></span><span></span><span></span></div>
+      </div>
+    </section>
+
+    <!-- Right form panel -->
+    <main class="form-panel">
+      <article class="login-card">
+        <div class="login-card__logo" aria-hidden="true">🔑</div>
+        <h2 class="login-card__heading">Willkommen zurück</h2>
+        <p class="login-card__sub">Melden Sie sich an, um auf das Immobilien-Portal zuzugreifen</p>
+
+        <form id="loginForm" autocomplete="off" novalidate>
+          <div class="field-group">
+            <label for="pw">Passwort</label>
+            <div class="input-wrapper">
+              <input type="password" id="pw" placeholder="Passwort eingeben" required aria-describedby="msgBox">
+              <button type="button" class="toggle-pw" id="togglePw" aria-label="Passwort anzeigen/verbergen">◎</button>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button type="submit" class="btn btn--primary" id="btnCustomer">Kunden-Login</button>
+            <button type="button" class="btn btn--dark" id="btnAdmin">Admin-Anmeldung</button>
+          </div>
+        </form>
+
+        <div class="msg-box" id="msgBox" role="alert" aria-live="polite"></div>
+
+        <!-- Demo credentials hint -->
+        <div class="demo-info hidden" id="demoInfo">
+          <strong>Demo-Zugangsdaten</strong><br>
+          Kunden-Passwort: <code>1234</code> &nbsp;|&nbsp; Admin-Passwort: <code>Admin</code>
+        </div>
+
+        <footer class="login-footer" id="loginFooter"></footer>
+      </article>
+    </main>
   </div>
-  <p class="hint center">Admins nutzen ihr Admin-Passwort und erhalten die Bearbeitungssicht.</p>
-  <p id="msg" class="error"></p>
-</div>
+
 <script>
-const COOLDOWN = window.CONFIG.LOGIN_THROTTLE_MS;
-let lastTry = 0;
+(function () {
+  "use strict";
 
-// SHA-256 hashing function
-async function hashPassword(password) {
+  const CFG = window.CONFIG;
+  const THROTTLE = CFG.LOGIN_THROTTLE_MS;
+  const MAX_ATTEMPTS = CFG.MAX_LOGIN_ATTEMPTS;
+  const COOLDOWN_MS = CFG.LOGIN_COOLDOWN_MS;
+
+  let failedAttempts = 0;
+  let lastTry = 0;
+  let cooldownUntil = 0;
+  let cooldownTimer = null;
+
+  // ── DOM refs ────────────────────────────────────────
+  const pwInput   = document.getElementById("pw");
+  const msgBox    = document.getElementById("msgBox");
+  const toggleBtn = document.getElementById("togglePw");
+  const form      = document.getElementById("loginForm");
+  const btnAdmin  = document.getElementById("btnAdmin");
+  const ribbon    = document.getElementById("demoRibbon");
+  const demoInfo  = document.getElementById("demoInfo");
+  const footer    = document.getElementById("loginFooter");
+  const brandTitle = document.getElementById("brandTitle");
+
+  // ── Branding from config ────────────────────────────
+  if (CFG.branding) {
+    brandTitle.textContent = CFG.branding.appName || brandTitle.textContent;
+    if (CFG.branding.companyName) {
+      footer.textContent = "© " + new Date().getFullYear() + " " + CFG.branding.companyName;
+    }
+  }
+
+  // ── Demo mode ───────────────────────────────────────
+  if (CFG.DEMO_MODE) {
+    document.body.classList.add("has-ribbon");
+    ribbon.classList.remove("hidden");
+    demoInfo.classList.remove("hidden");
+  }
+
+  // ── SHA-256 hashing ─────────────────────────────────
+  async function hashPassword(password) {
     const msgBuffer = new TextEncoder().encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-}
+    return hashArray.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  }
 
-function setSession(role, credentialHash) {
+  // ── Session ─────────────────────────────────────────
+  function setSession(role, credentialHash) {
     sessionStorage.setItem("access", Date.now());
     sessionStorage.setItem("role", role);
     sessionStorage.setItem("credentialHash", credentialHash);
     window.location.href = "geheim.html";
-}
+  }
 
-async function login(role = "customer") {
-    const now = Date.now();
-    if (now - lastTry < COOLDOWN) {
-        document.getElementById("msg").textContent = "Bitte 1 Sekunde warten...";
-        return;
+  // ── UI helpers ──────────────────────────────────────
+  function showMsg(text, type) {
+    msgBox.textContent = text;
+    msgBox.className = "msg-box" + (type ? " msg-" + type : "");
+  }
+
+  function clearMsg() {
+    msgBox.textContent = "";
+    msgBox.className = "msg-box";
+  }
+
+  function setInputError(on) {
+    if (on) {
+      pwInput.classList.add("input-error");
+    } else {
+      pwInput.classList.remove("input-error");
+    }
+  }
+
+  // ── Cooldown countdown ──────────────────────────────
+  function startCooldown() {
+    cooldownUntil = Date.now() + COOLDOWN_MS;
+    updateCooldownDisplay();
+    cooldownTimer = setInterval(updateCooldownDisplay, 1000);
+  }
+
+  function updateCooldownDisplay() {
+    var remaining = Math.max(0, cooldownUntil - Date.now());
+    if (remaining <= 0) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+      failedAttempts = 0;
+      clearMsg();
+      return;
+    }
+    var secs = Math.ceil(remaining / 1000);
+    showMsg("Zu viele Fehlversuche. Bitte warten: " + secs + "s", "cooldown");
+  }
+
+  // ── Login ───────────────────────────────────────────
+  async function login(role) {
+    clearMsg();
+    setInputError(false);
+
+    // Check active cooldown
+    if (cooldownUntil > Date.now()) {
+      updateCooldownDisplay();
+      return;
+    }
+
+    // Throttle
+    var now = Date.now();
+    if (now - lastTry < THROTTLE) {
+      showMsg("Bitte kurz warten…", "error");
+      return;
     }
     lastTry = now;
-    const val = document.getElementById("pw").value.trim();
-    if (!val) {
-        document.getElementById("msg").textContent = "Bitte Passwort eingeben.";
-        return;
-    }
-    const hashedInput = await hashPassword(val);
-    const target = role === "admin" ? ADMIN_HASH : PASS_HASH;
-    
-    if (hashedInput === target) {
-        setSession(role, hashedInput);
-    } else {
-        document.getElementById("msg").textContent = "Falsches Passwort";
-    }
-}
 
-document.getElementById("pw").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    login("customer");
+    // Validate
+    var val = pwInput.value.trim();
+    if (!val) {
+      setInputError(true);
+      showMsg("Bitte Passwort eingeben.", "error");
+      pwInput.focus();
+      return;
+    }
+
+    var hashedInput = await hashPassword(val);
+    var target = role === "admin" ? ADMIN_HASH : PASS_HASH;
+
+    if (hashedInput === target) {
+      showMsg("✓ Erfolgreich angemeldet – Weiterleitung…", "success");
+      setTimeout(function () { setSession(role, hashedInput); }, 600);
+    } else {
+      failedAttempts++;
+      setInputError(true);
+      if (failedAttempts >= MAX_ATTEMPTS) {
+        startCooldown();
+      } else {
+        var left = MAX_ATTEMPTS - failedAttempts;
+        showMsg("Falsches Passwort. Noch " + left + " Versuch" + (left !== 1 ? "e" : "") + " übrig.", "error");
+      }
+    }
   }
-});
+
+  // ── Events ──────────────────────────────────────────
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    login("customer");
+  });
+
+  btnAdmin.addEventListener("click", function () {
+    login("admin");
+  });
+
+  toggleBtn.addEventListener("click", function () {
+    var isPassword = pwInput.type === "password";
+    pwInput.type = isPassword ? "text" : "password";
+    toggleBtn.textContent = isPassword ? "◉" : "◎";
+  });
+
+  pwInput.addEventListener("input", function () {
+    setInputError(false);
+    if (!cooldownTimer) clearMsg();
+  });
+})();
 </script>
 </body>
 </html>
