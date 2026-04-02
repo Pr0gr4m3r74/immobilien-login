@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login – Geschützter Bereich</title>
 <link rel="stylesheet" href="styles.css">
+<script src="config.js"></script>
 <script src="auth.js"></script>
 </head>
 <body>
@@ -21,7 +22,7 @@
   <p id="msg" class="error"></p>
 </div>
 <script>
-const COOLDOWN = 1000;
+const COOLDOWN = window.CONFIG.LOGIN_THROTTLE_MS;
 let lastTry = 0;
 
 // SHA-256 hashing function
