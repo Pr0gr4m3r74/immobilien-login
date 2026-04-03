@@ -1,645 +1,258 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Exklusive Wohnungen</title>
-<link rel="stylesheet" href="styles.css">
-<script src="config.js"></script>
-<script src="auth.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interne Immobilienplattform hinter Login.">
+  <title>Dashboard – Private Immobilienplattform</title>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    if (!window.App || !window.App.requireSession()) {
+      window.location.replace('index.html');
+    } else {
+      document.documentElement.classList.add('session-ok');
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="i18n.js" defer></script>
+  <script src="properties.js" defer></script>
+  <script src="portal.js" defer></script>
 </head>
-<body class="protected-body">
-<script>
-const SESSION_TIME = window.CONFIG.SESSION_TIMEOUT_MS;
-const role = sessionStorage.getItem("role");
-const credentialHash = sessionStorage.getItem("credentialHash");
-const loginTime = parseInt(sessionStorage.getItem("access"));
-const isCustomerSession = role === "customer" && credentialHash === PASS_HASH;
-const isAdminSession = role === "admin" && credentialHash === ADMIN_HASH;
-if (!loginTime || Date.now() - loginTime > SESSION_TIME || (!isCustomerSession && !isAdminSession)) {
-    alert("Session abgelaufen – bitte erneut einloggen.");
-    sessionStorage.removeItem("access");
-    sessionStorage.removeItem("role");
-    sessionStorage.removeItem("credentialHash");
-    window.location.href = "index.html";
-}
-const isAdmin = isAdminSession;
-document.body.classList.add(isAdmin ? "role-admin" : "role-customer");
-let timer;
-function reset() {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-        alert("30 Minuten Inaktivität – Bereich gesperrt.");
-        sessionStorage.removeItem("access");
-        sessionStorage.removeItem("credentialHash");
-        sessionStorage.removeItem("role");
-        window.location.href = "index.html";
-    }, SESSION_TIME);
-}
-reset();
-document.onmousemove = reset;
-document.onkeypress = reset;
-document.onclick = reset;
-document.onscroll = reset;
-</script>
+<body class="portal-page">
+  <header class="shell-header">
+    <a class="brand-mark" href="#dashboard">
+      <span class="brand-mark__logo">⌂</span>
+      <div>
+        <strong>Private Immobilienplattform</strong>
+        <small data-i18n="portal.kicker"></small>
+      </div>
+    </a>
 
-<div class="page">
-  <header class="top-bar">
-    <div>
-      <p class="eyebrow" id="viewEyebrow">Verkaufsübersicht</p>
-      <h1 id="viewTitle">Exklusive Wohnungsangebote</h1>
-      <p class="subline" id="viewSubline">Scrollen, anklicken, Galerie öffnen – alle Verkäufe im Blick.</p>
-      <span class="pill soft mode-indicator" id="modeIndicator">Kundenansicht</span>
-    </div>
-    <button class="logout" onclick="sessionStorage.removeItem('access'); sessionStorage.removeItem('role'); sessionStorage.removeItem('credentialHash'); window.location.href='index.html'">Logout</button>
+    <button type="button" class="icon-button mobile-only" id="menuToggle" data-i18n-aria-label="common.menu">☰</button>
+
+    <nav class="header-nav" id="navMenu">
+      <a href="#dashboard" data-i18n="common.dashboard"></a>
+      <a href="#immobilien" data-i18n="common.properties"></a>
+      <a href="#objekt-erstellen" class="admin-only" data-i18n="common.createProperty"></a>
+      <button type="button" class="button button--ghost" id="themeToggle" data-theme-toggle>
+        <span>◐</span>
+        <span data-theme-label></span>
+      </button>
+      <label class="language-switch">
+        <span data-i18n="common.language"></span>
+        <select data-language-select>
+          <option value="de">DE</option>
+          <option value="en">EN</option>
+        </select>
+      </label>
+      <button type="button" class="button button--ghost" data-logout data-i18n="common.logout"></button>
+    </nav>
   </header>
 
-  <section class="grid">
-    <article class="card highlight admin-only" id="adminPanel">
-      <div class="card-header">
-        <div>
-          <p class="eyebrow">Neues Angebot</p>
-          <h2>Schnell Wohnung einstellen</h2>
-          <p class="subline">Name, Adresse, Text & Bilder eintragen – fertig. Änderungen bleiben lokal gespeichert.</p>
+  <main class="page-shell">
+    <section class="hero-panel" id="dashboard">
+      <div class="hero-panel__copy">
+        <span class="pill" data-i18n="portal.heroBadge"></span>
+        <p class="eyebrow" data-i18n="portal.kicker"></p>
+        <h1 data-i18n="portal.title"></h1>
+        <p class="hero-panel__subline" data-i18n="portal.subtitle"></p>
+        <div class="hero-panel__actions">
+          <button type="button" class="button button--primary admin-only" id="quickAction" data-i18n="portal.quickAction"></button>
+          <span class="role-badge" id="roleBadge"></span>
         </div>
-        <span class="pill">2 Klicks zum Inserat</span>
       </div>
-      <form id="addForm" class="form">
-        <div class="form-row">
-          <label>Objektname*</label>
-          <input type="text" id="name" required placeholder="z.B. Sonnenhof Apartment">
-        </div>
-        <div class="form-row two-cols">
-          <div>
-            <label>Adresse*</label>
-            <input type="text" id="address" required placeholder="Straße, PLZ Ort">
-          </div>
-          <div>
-            <label>Preis / Eckdaten</label>
-            <input type="text" id="price" placeholder="Kaufpreis, Fläche, Zimmer">
-          </div>
-        </div>
-         <div class="form-row">
-           <label>Beschreibung*</label>
-           <div class="editor-toolbar">
-             <button type="button" data-cmd="bold">Fett</button>
-             <button type="button" data-cmd="italic">Kursiv</button>
-             <button type="button" data-cmd="underline">Unterstrichen</button>
-             <button type="button" data-block="p">Text</button>
-             <button type="button" data-block="h3">Überschrift</button>
-             <select id="fontPicker">
-               <option value="Inter,Arial">Inter</option>
-               <option value="Georgia,serif">Georgia</option>
-               <option value="'Times New Roman',serif">Times</option>
-             </select>
-             <select id="sizePicker">
-               <option value="16px">Normal</option>
-               <option value="18px">Groß</option>
-               <option value="20px">Sehr groß</option>
-             </select>
-           </div>
-           <div id="descriptionEditor" class="rich-editor" contenteditable="true" aria-label="Beschreibung bearbeiten" placeholder="Kurzer Verkaufstext"></div>
-           <p class="hint">Text frei formatieren: Schriftart, Größe, Absätze.</p>
-         </div>
-        <div class="form-row">
-          <label>Bilder hinzufügen</label>
-          <input type="file" id="imageFiles" accept="image/*" multiple>
-          <input type="text" id="images" placeholder="Bilder-URLs (optional)">
-          <p class="hint" id="imageStatus">Bilder können hochgeladen, eingefügt oder per URL angegeben werden. Ohne Auswahl wird das Standardbild genutzt.</p>
-        </div>
-         <div class="form-row two-cols">
-           <button type="submit" id="submitBtn">Angebot anlegen</button>
-           <button type="button" id="cancelEdit" class="ghost" hidden>Abbrechen</button>
-         </div>
-         <button type="button" id="exportBtn" class="secondary">Datei mit Angeboten erstellen</button>
-         <p class="form-feedback" id="formFeedback"></p>
-       </form>
-    </article>
-
-    <article class="card">
-      <div class="list-header">
-        <div>
-          <p class="eyebrow">Verkäufe</p>
-          <h2>Alle Objekte</h2>
-          <p class="subline" id="listSubline">Klicke auf eine Karte, um Bilder & Beschreibung zu sehen. Entfernen ist jederzeit möglich.</p>
-        </div>
-        <span class="pill soft">Klicken für Details</span>
+      <div class="hero-panel__stats">
+        <article class="stat-card">
+          <span data-i18n="portal.statTotal"></span>
+          <strong id="statTotalValue">0</strong>
+        </article>
+        <article class="stat-card">
+          <span data-i18n="portal.statVisible"></span>
+          <strong id="statVisibleValue">0</strong>
+        </article>
+        <article class="stat-card">
+          <span data-i18n="portal.statCities"></span>
+          <strong id="statCitiesValue">0</strong>
+        </article>
       </div>
-      <div id="propertyList" class="property-list"></div>
-    </article>
-  </section>
-</div>
+    </section>
 
-<div id="detailModal" class="modal hidden">
-  <div class="modal-content">
-    <button class="close" id="closeModal" aria-label="Modal schließen">&times;</button>
-    <div class="modal-gallery">
-      <button class="nav prev" id="prevImg" aria-label="Vorheriges Bild">&lsaquo;</button>
-      <img id="modalImage" src="" alt="Wohnung Bild">
-      <button class="nav next" id="nextImg" aria-label="Nächstes Bild">&rsaquo;</button>
-    </div>
-    <div class="modal-meta">
-      <div>
-        <p class="eyebrow" id="modalAddress"></p>
+    <section class="panel search-panel">
+      <div class="section-heading section-heading--centered">
+        <p class="eyebrow" data-i18n="common.search"></p>
+        <h2 data-i18n="portal.searchTitle"></h2>
+        <p data-i18n="portal.searchSubtitle"></p>
+      </div>
+      <form id="searchForm" class="stack-lg">
+        <div class="search-bar-row">
+          <input id="searchInput" type="search" data-i18n-placeholder="portal.searchPlaceholder">
+          <button type="submit" class="button button--primary" data-i18n="common.search"></button>
+        </div>
+        <div class="filter-grid">
+          <div class="field-group">
+            <label for="cityFilter" data-i18n="portal.city"></label>
+            <input id="cityFilter" type="text" list="citySuggestions" data-i18n-placeholder="portal.cityPlaceholder">
+            <datalist id="citySuggestions"></datalist>
+          </div>
+          <div class="field-group">
+            <label for="minPrice" data-i18n="portal.minPrice"></label>
+            <input id="minPrice" type="number" min="0">
+          </div>
+          <div class="field-group">
+            <label for="maxPrice" data-i18n="portal.maxPrice"></label>
+            <input id="maxPrice" type="number" min="0">
+          </div>
+          <div class="field-group">
+            <label for="roomsFilter" data-i18n="portal.rooms"></label>
+            <input id="roomsFilter" type="number" min="0" step="1">
+          </div>
+        </div>
+        <div class="panel-actions">
+          <p class="results-info" id="resultsInfo"></p>
+          <button type="button" class="button button--ghost" id="resetFilters" data-i18n="common.resetFilters"></button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" id="immobilien">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow" data-i18n="common.properties"></p>
+          <h2 data-i18n="portal.resultsTitle"></h2>
+          <p data-i18n="portal.resultsSubtitle"></p>
+        </div>
+      </div>
+      <div class="property-grid" id="propertyGrid"></div>
+    </section>
+
+    <section class="panel admin-only" id="objekt-erstellen">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow" data-i18n="common.createProperty"></p>
+          <h2 data-i18n="portal.adminTitle"></h2>
+          <p data-i18n="portal.adminSubtitle"></p>
+        </div>
+      </div>
+
+      <form id="propertyForm" class="admin-form stack-lg">
+        <div class="form-grid form-grid--two">
+          <div class="field-group">
+            <label for="fieldTitle" data-i18n="portal.fieldTitle"></label>
+            <input id="fieldTitle" type="text">
+          </div>
+          <div class="field-group">
+            <label for="fieldCity" data-i18n="portal.fieldCity"></label>
+            <input id="fieldCity" type="text">
+          </div>
+          <div class="field-group form-grid__span">
+            <label for="fieldAddress" data-i18n="portal.fieldAddress"></label>
+            <input id="fieldAddress" type="text">
+          </div>
+          <div class="field-group">
+            <label for="fieldPrice" data-i18n="portal.fieldPrice"></label>
+            <input id="fieldPrice" type="number" min="0">
+          </div>
+          <div class="field-group">
+            <label for="fieldRooms" data-i18n="portal.fieldRooms"></label>
+            <input id="fieldRooms" type="number" min="0" step="1">
+          </div>
+          <div class="field-group">
+            <label for="fieldArea" data-i18n="portal.fieldArea"></label>
+            <input id="fieldArea" type="number" min="0">
+          </div>
+          <div class="field-group">
+            <label for="fieldType" data-i18n="portal.fieldType"></label>
+            <select id="fieldType">
+              <option value="apartment" data-i18n="propertyType.apartment"></option>
+              <option value="penthouse" data-i18n="propertyType.penthouse"></option>
+              <option value="townhouse" data-i18n="propertyType.townhouse"></option>
+              <option value="loft" data-i18n="propertyType.loft"></option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="fieldStatus" data-i18n="portal.fieldStatus"></label>
+            <select id="fieldStatus">
+              <option value="available" data-i18n="propertyStatus.available"></option>
+              <option value="reserved" data-i18n="propertyStatus.reserved"></option>
+              <option value="new" data-i18n="propertyStatus.new"></option>
+            </select>
+          </div>
+          <div class="field-group form-grid__span">
+            <label for="fieldFeatures" data-i18n="portal.fieldFeatures"></label>
+            <input id="fieldFeatures" type="text">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label data-i18n="portal.editorLabel"></label>
+          <div class="editor-toolbar">
+            <button type="button" class="button button--ghost button--sm" data-editor-cmd="bold" data-i18n="portal.toolbarBold"></button>
+            <button type="button" class="button button--ghost button--sm" data-editor-cmd="italic" data-i18n="portal.toolbarItalic"></button>
+            <button type="button" class="button button--ghost button--sm" data-editor-cmd="insertUnorderedList" data-i18n="portal.toolbarList"></button>
+          </div>
+          <div id="descriptionEditor" class="rich-editor" contenteditable="true"></div>
+        </div>
+
+        <div class="form-grid form-grid--two">
+          <div class="field-group">
+            <label for="fieldFiles" data-i18n="portal.fieldFiles"></label>
+            <input id="fieldFiles" type="file" accept="image/*" multiple>
+          </div>
+          <div class="field-group">
+            <label for="fieldImages" data-i18n="portal.fieldImages"></label>
+            <textarea id="fieldImages" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <p class="hint-text" data-i18n="portal.imageHint"></p>
+          <div class="image-preview-grid" id="imagePreview"></div>
+        </div>
+
+        <div class="panel-actions">
+          <p class="form-feedback" id="formFeedback"></p>
+          <div class="button-grid button-grid--auto">
+            <button type="button" class="button button--ghost" id="exportProperties" data-i18n="common.export"></button>
+            <button type="submit" class="button button--primary" id="formSubmit" data-i18n="common.createProperty"></button>
+            <button type="button" class="button button--ghost" id="formCancel" hidden data-i18n="common.cancel"></button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <div class="modal" id="propertyModal" hidden>
+    <div class="modal-dialog">
+      <button type="button" class="icon-button modal-close" id="modalClose" data-i18n-aria-label="common.cancel">×</button>
+      <div class="modal-gallery">
+        <button type="button" class="gallery-nav" id="modalPrev">‹</button>
+        <img id="modalImage" src="" alt="">
+        <button type="button" class="gallery-nav" id="modalNext">›</button>
+      </div>
+      <div class="modal-thumbs" id="modalThumbs"></div>
+      <div class="modal-body">
+        <div class="modal-topline">
+          <span class="pill" id="modalStatus"></span>
+          <p id="modalLocation"></p>
+        </div>
         <h3 id="modalTitle"></h3>
-        <p class="price" id="modalPrice"></p>
+        <p class="modal-price" id="modalPrice"></p>
+        <div class="modal-grid">
+          <section>
+            <h4 data-i18n="portal.description"></h4>
+            <div id="modalDescription" class="modal-description"></div>
+          </section>
+          <aside>
+            <h4 data-i18n="portal.features"></h4>
+            <ul class="fact-list" id="modalFacts"></ul>
+            <ul class="feature-list" id="modalFeatures"></ul>
+          </aside>
+        </div>
       </div>
-      <span class="pill accent" id="modalCounter"></span>
     </div>
-    <p id="modalDescription" class="modal-description"></p>
   </div>
-</div>
-
-<script>
-  const makePlaceholder = (text, bg, fg = "#111827") =>
-    `data:image/svg+xml,${encodeURIComponent(
-      `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 360'><rect width='600' height='360' rx='24' fill='${bg}'/><text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' font-size='46' font-family='Inter,Arial' fill='${fg}' opacity='0.82'>${text}</text></svg>`
-    )}`;
-
-  const CONFIG = {
-    FALLBACK_IMAGE: makePlaceholder("Vorschau", "#FACC15")
-  };
-  const SAMPLE_IMAGES = [
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g2' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%234F46E5'/%3E%3Cstop offset='100%25' stop-color='%238B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='720' rx='24' fill='url(%23g2)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='54' font-family='Inter,Arial' fill='%23F9FAFB' opacity='0.9'%3ESonnenhof%3C/text%3E%3C/svg%3E",
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g3' x1='0' y1='1' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%230EA5E9'/%3E%3Cstop offset='100%25' stop-color='%23111827'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='720' rx='24' fill='url(%23g3)'/%3E%3Ctext x='50%25' y='52%25' dominant-baseline='middle' text-anchor='middle' font-size='46' font-family='Inter,Arial' fill='%23E0F2FE' opacity='0.9'%3EWohnung%20Galerie%3C/text%3E%3C/svg%3E",
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g4' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%23F97316'/%3E%3Cstop offset='100%25' stop-color='%23FACC15'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='720' rx='24' fill='url(%23g4)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' font-family='Inter,Arial' fill='%23111827' opacity='0.88'%3EModern%20Living%3C/text%3E%3C/svg%3E"
-  ];
-  const STORAGE_KEY = "properties-for-sale";
-  const sampleProperty = {
-    id: "obj-001",
-    name: "Sonnenhof Apartment",
-    address: "Sonnenweg 12, 70173 Stuttgart",
-    price: "Kaufpreis: 482.000 € · 96 m² · 3 Zimmer",
-    description: "Lichtdurchflutete Wohnung mit bodentiefen Fenstern, Eichenparkett und großzügigem Süd-Balkon. Ideal für Paare, die modernes Design und kurze Wege in die City schätzen.",
-    descriptionHtml: "<p>Lichtdurchflutete Wohnung mit bodentiefen Fenstern, Eichenparkett und großzügigem Süd-Balkon.</p><p>Ideal für Paare, die modernes Design und kurze Wege in die City schätzen.</p>",
-    images: SAMPLE_IMAGES
-  };
-
-  let properties = [];
-  let activeProperty = null;
-  let activeImageIndex = 0;
-  let editingId = null;
-  let formImages = [];
-
-  const ALLOWED_TAGS = new Set(["b", "strong", "i", "em", "u", "br", "p", "ul", "ol", "li", "h3", "h4", "span"]);
-
-  let idCounter = 0;
-  const nextCounter = () => {
-    idCounter += 1;
-    return idCounter;
-  };
-  const createId = () => {
-    if (crypto.randomUUID) return `obj-${crypto.randomUUID()}`;
-    if (crypto.getRandomValues) {
-      const buf = new Uint32Array(2);
-      crypto.getRandomValues(buf);
-      return `obj-${buf[0].toString(16)}${buf[1].toString(16)}`;
-    }
-    return `obj-${Date.now().toString(36)}-${nextCounter()}-${Math.random().toString(36).slice(2, 6)}`;
-  };
-
-  function sanitizeHtml(input) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(`<div>${input || ""}</div>`, "text/html");
-    const cleanNode = (node) => {
-      let child = node.firstChild;
-      while (child) {
-        const next = child.nextSibling;
-        if (child.nodeType === 1) {
-          const tag = child.tagName.toLowerCase();
-          if (!ALLOWED_TAGS.has(tag)) {
-            child.replaceWith(doc.createTextNode(child.textContent || ""));
-          } else {
-            Array.from(child.attributes || []).forEach((attr) => child.removeAttribute(attr.name));
-            cleanNode(child);
-          }
-        }
-        child = next;
-      }
-    };
-    cleanNode(doc.body);
-    return doc.body.innerHTML.trim();
-  }
-
-  function htmlToText(html) {
-    const div = document.createElement("div");
-    div.innerHTML = html || "";
-    return div.textContent.trim();
-  }
-
-  function initEditorTools() {
-    const editor = document.getElementById("descriptionEditor");
-    const sizeMap = { "16px": "3", "18px": "4", "20px": "5" };
-    document.querySelectorAll(".editor-toolbar [data-cmd]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        editor.focus();
-        document.execCommand(btn.dataset.cmd, false, null);
-      });
-    });
-    document.querySelectorAll(".editor-toolbar [data-block]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        editor.focus();
-        document.execCommand("formatBlock", false, btn.dataset.block);
-      });
-    });
-    const fontPicker = document.getElementById("fontPicker");
-    const sizePicker = document.getElementById("sizePicker");
-    fontPicker.addEventListener("change", (e) => {
-      editor.focus();
-      document.execCommand("fontName", false, e.target.value);
-    });
-    sizePicker.addEventListener("change", (e) => {
-      editor.focus();
-      document.execCommand("fontSize", false, sizeMap[e.target.value] || "3");
-    });
-  }
-
-  function normalizeProperty(p) {
-    const images = normalizeImages(p?.images);
-    const descriptionHtml = p.descriptionHtml || (p.description ? sanitizeHtml((p.description || "").replace(/\n/g, "<br>")) : "");
-    return {
-      id: p.id || createId(),
-      name: p.name || "Unbenannt",
-      address: p.address || "",
-      price: p.price || "Preis auf Anfrage",
-      descriptionHtml,
-      images
-    };
-  }
-
-  function parseImageInput(value) {
-    if (!value) return [];
-    const trimmed = typeof value === "string" ? value.trim() : "";
-    if (!trimmed) return [];
-    if (/^data:/i.test(trimmed) && !/,\s*data:/i.test(trimmed)) {
-      return [trimmed];
-    }
-    const parts = trimmed
-      .split(/(?:,\s*(?=(https?:|data:))|\n+)/i)
-      .map((u) => (u || "").trim())
-      .filter(Boolean);
-    if (parts.length === 1 && trimmed.includes(",") && !/^data:/i.test(trimmed)) {
-      return trimmed.split(",").map((u) => (u || "").trim()).filter(Boolean);
-    }
-    return parts;
-  }
-
-  function loadProperties() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) throw new Error("no data");
-      const saved = JSON.parse(raw);
-      if (Array.isArray(saved) && saved.length) {
-        return saved.map(normalizeProperty);
-      }
-    } catch (e) {
-      localStorage.removeItem(STORAGE_KEY); // reset corrupted state
-    }
-    const fresh = [sampleProperty];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
-    return fresh;
-  }
-
-  function persistProperties() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(properties));
-  }
-
-  function exportProperties() {
-    const data = JSON.stringify(properties, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "immobilien-daten.json";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function normalizeImages(input) {
-    const raw = Array.isArray(input) ? input : parseImageInput(input || "");
-    const urls = raw.map((u) => (u || "").trim()).filter(Boolean);
-    return urls.length ? urls : [CONFIG.FALLBACK_IMAGE];
-  }
-
-  function updateImageStatus(text) {
-    const el = document.getElementById("imageStatus");
-    if (el) el.textContent = text;
-  }
-
-  function filesToDataUrls(files) {
-    const readers = (files || []).map((file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    }));
-    return Promise.all(readers);
-  }
-
-  function createCard(property) {
-    const card = document.createElement("article");
-    card.className = "property-card";
-
-    const img = document.createElement("img");
-    img.src = property.images[0] || CONFIG.FALLBACK_IMAGE;
-    img.alt = property.name;
-    img.onerror = () => (img.src = CONFIG.FALLBACK_IMAGE);
-    img.className = "thumb";
-    card.appendChild(img);
-
-    const badge = document.createElement("span");
-    badge.className = "pill accent floating";
-    badge.textContent = "Verkauf";
-    card.appendChild(badge);
-
-    const body = document.createElement("div");
-    body.className = "property-body";
-    const address = document.createElement("p");
-    address.className = "eyebrow";
-    address.textContent = property.address;
-    const title = document.createElement("h3");
-    title.textContent = property.name;
-    body.append(address, title);
-    if (isAdmin) {
-      const price = document.createElement("p");
-      price.className = "price";
-      price.textContent = property.price || "Preis auf Anfrage";
-      const teaser = document.createElement("p");
-      teaser.className = "teaser";
-      teaser.textContent = htmlToText(property.descriptionHtml || property.description);
-      body.append(price, teaser);
-    }
-    card.appendChild(body);
-
-    const actions = document.createElement("div");
-    actions.className = "card-actions";
-    const openBtn = document.createElement("button");
-    openBtn.textContent = "Details & Galerie";
-    openBtn.className = "ghost";
-    openBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      openModal(property);
-    });
-    actions.appendChild(openBtn);
-
-    if (isAdmin) {
-      const editBtn = document.createElement("button");
-      editBtn.textContent = "Bearbeiten";
-      editBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        startEdit(property);
-      });
-      actions.appendChild(editBtn);
-      const removeBtn = document.createElement("button");
-      removeBtn.textContent = "Entfernen";
-      removeBtn.className = "danger";
-      removeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        removeProperty(property.id);
-      });
-      actions.appendChild(removeBtn);
-    }
-    card.appendChild(actions);
-
-    card.addEventListener("click", () => openModal(property));
-    return card;
-  }
-
-  function renderProperties() {
-    const list = document.getElementById("propertyList");
-    list.innerHTML = "";
-    if (!properties.length) {
-      const empty = document.createElement("p");
-      empty.className = "hint";
-      empty.textContent = isAdmin
-        ? "Noch keine Angebote. Mit dem Formular oben in Sekunden hinzufügen."
-        : "Aktuell keine Angebote verfügbar.";
-      list.appendChild(empty);
-      return;
-    }
-    properties.forEach((prop) => list.appendChild(createCard(prop)));
-  }
-
-  function removeProperty(id) {
-    properties = properties.filter((p) => p.id !== id);
-    persistProperties();
-    renderProperties();
-  }
-
-  function setEditorContent(html) {
-    const editor = document.getElementById("descriptionEditor");
-    editor.innerHTML = html || "";
-  }
-
-  function resetForm() {
-    editingId = null;
-    formImages = [];
-    document.getElementById("addForm").reset();
-    const fileInput = document.getElementById("imageFiles");
-    if (fileInput) fileInput.value = "";
-    setEditorContent("");
-    document.getElementById("submitBtn").textContent = "Angebot anlegen";
-    document.getElementById("cancelEdit").hidden = true;
-    updateImageStatus("Bilder können hochgeladen, eingefügt oder per URL angegeben werden. Ohne Auswahl wird das Standardbild genutzt.");
-  }
-
-  function startEdit(property) {
-    editingId = property.id;
-    document.getElementById("name").value = property.name || "";
-    document.getElementById("address").value = property.address || "";
-    document.getElementById("price").value = property.price || "";
-    setEditorContent(property.descriptionHtml || sanitizeHtml(property.description || ""));
-    formImages = normalizeImages(property.images || []);
-    document.getElementById("images").value = "";
-    const fileInput = document.getElementById("imageFiles");
-    if (fileInput) fileInput.value = "";
-    updateImageStatus(`${formImages.length} bestehende Bild(er) geladen. Neue Dateien oder URLs ersetzen die Auswahl.`);
-    document.getElementById("submitBtn").textContent = "Angebot aktualisieren";
-    document.getElementById("cancelEdit").hidden = false;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function openModal(property) {
-    activeProperty = property;
-    activeImageIndex = 0;
-    updateModal();
-    document.getElementById("detailModal").classList.remove("hidden");
-  }
-
-  function closeModal() {
-    document.getElementById("detailModal").classList.add("hidden");
-  }
-
-  function updateModal() {
-    if (!activeProperty) return;
-    const imgEl = document.getElementById("modalImage");
-    imgEl.src = activeProperty.images[activeImageIndex] || CONFIG.FALLBACK_IMAGE;
-    imgEl.onerror = () => (imgEl.src = CONFIG.FALLBACK_IMAGE);
-
-    document.getElementById("modalTitle").textContent = activeProperty.name;
-    document.getElementById("modalAddress").textContent = activeProperty.address;
-    document.getElementById("modalPrice").textContent = activeProperty.price || "Preis auf Anfrage";
-    document.getElementById("modalDescription").innerHTML = sanitizeHtml(activeProperty.descriptionHtml || activeProperty.description || "");
-    document.getElementById("modalCounter").textContent = `${activeImageIndex + 1} / ${activeProperty.images.length}`;
-  }
-
-  function nextImage() {
-    if (!activeProperty) return;
-    activeImageIndex = (activeImageIndex + 1) % activeProperty.images.length;
-    updateModal();
-  }
-
-  function prevImage() {
-    if (!activeProperty) return;
-    activeImageIndex = (activeImageIndex - 1 + activeProperty.images.length) % activeProperty.images.length;
-    updateModal();
-  }
-
-  if (isAdmin) {
-    initEditorTools();
-    const urlInput = document.getElementById("images");
-    const fileInputEl = document.getElementById("imageFiles");
-
-    if (fileInputEl) {
-      fileInputEl.addEventListener("change", async (e) => {
-        const files = Array.from(e.target.files || []);
-        if (!files.length) {
-          formImages = [];
-          updateImageStatus("Keine Dateien ausgewählt – URLs oder Standardbild nutzen.");
-          return;
-        }
-        try {
-          const dataUrls = await filesToDataUrls(files);
-          formImages = dataUrls;
-          if (urlInput) urlInput.value = "";
-          updateImageStatus(`${dataUrls.length} Bild(er) hinzugefügt (lokal gespeichert).`);
-        } catch (err) {
-          updateImageStatus("Bilder konnten nicht gelesen werden.");
-        }
-      });
-    }
-
-    if (urlInput) {
-      urlInput.addEventListener("paste", async (e) => {
-        const items = Array.from(e.clipboardData?.items || []).filter((item) => item.type && item.type.startsWith("image/"));
-        if (!items.length) return;
-        e.preventDefault();
-        try {
-          const files = items.map((item) => item.getAsFile()).filter(Boolean);
-          if (!files.length) return;
-          const dataUrls = await filesToDataUrls(files);
-          formImages = dataUrls;
-          if (fileInputEl) fileInputEl.value = "";
-          urlInput.value = "";
-          updateImageStatus(`${dataUrls.length} Bild(er) aus Zwischenablage übernommen.`);
-        } catch (err) {
-          updateImageStatus("Bilder aus der Zwischenablage konnten nicht verarbeitet werden.");
-        }
-      });
-      urlInput.addEventListener("input", () => {
-        if (urlInput.value.trim()) {
-          formImages = [];
-          if (fileInputEl) fileInputEl.value = "";
-          updateImageStatus("URLs werden genutzt. Hochgeladene oder eingefügte Bilder werden ersetzt.");
-        }
-      });
-    }
-    document.getElementById("addForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const name = document.getElementById("name").value.trim();
-      const address = document.getElementById("address").value.trim();
-      const price = document.getElementById("price").value.trim();
-      const descriptionRaw = document.getElementById("descriptionEditor").innerHTML.trim();
-      const descriptionSafe = sanitizeHtml(descriptionRaw);
-      const descriptionText = htmlToText(descriptionSafe);
-      const urlInputValue = document.getElementById("images").value.trim();
-      const fileInput = document.getElementById("imageFiles");
-      const feedback = document.getElementById("formFeedback");
-      let fileImages = formImages;
-
-      if (fileInput && fileInput.files && fileInput.files.length) {
-        try {
-          fileImages = await filesToDataUrls(Array.from(fileInput.files || []));
-          formImages = fileImages;
-          updateImageStatus(`${fileImages.length} Bild(er) hinzugefügt.`);
-        } catch (err) {
-          feedback.textContent = "Bilder konnten nicht geladen werden.";
-          feedback.classList.add("error");
-          return;
-        }
-      }
-
-      const images = fileImages.length
-        ? fileImages
-        : urlInputValue
-          ? normalizeImages(urlInputValue)
-          : normalizeImages(formImages);
-
-      if (name === "" || address === "" || descriptionSafe === "") {
-        feedback.textContent = "Bitte Objektname, Adresse und Beschreibung ausfüllen.";
-        feedback.classList.add("error");
-        return;
-      }
-
-      const baseProperty = {
-        id: editingId || createId(),
-        name,
-        address,
-        price: price || "Preis auf Anfrage",
-        description: descriptionText,
-        descriptionHtml: descriptionSafe,
-        images
-      };
-
-      if (editingId) {
-        properties = properties.map((p) => (p.id === editingId ? { ...p, ...baseProperty } : p));
-        feedback.textContent = "Angebot aktualisiert.";
-      } else {
-        properties.unshift(baseProperty);
-        feedback.textContent = "Angebot gespeichert.";
-      }
-      persistProperties();
-      renderProperties();
-
-      resetForm();
-      feedback.classList.remove("error");
-    });
-    document.getElementById("cancelEdit").addEventListener("click", resetForm);
-    document.getElementById("exportBtn").addEventListener("click", exportProperties);
-  }
-
-  document.getElementById("closeModal").addEventListener("click", closeModal);
-  document.getElementById("nextImg").addEventListener("click", nextImage);
-  document.getElementById("prevImg").addEventListener("click", prevImage);
-  document.getElementById("detailModal").addEventListener("click", (e) => {
-    if (e.target.id === "detailModal") closeModal();
-  });
-
-  const indicator = document.getElementById("modeIndicator");
-  if (indicator) {
-    indicator.textContent = isAdmin ? "Adminansicht" : "Kundenansicht";
-    if (isAdmin) indicator.classList.add("accent");
-  }
-  const eyebrow = document.getElementById("viewEyebrow");
-  const title = document.getElementById("viewTitle");
-  const subline = document.getElementById("viewSubline");
-  const listSubline = document.getElementById("listSubline");
-  if (!isAdmin) {
-    eyebrow.textContent = "Kundenbereich";
-    title.textContent = "Verfügbare Wohnungen";
-    subline.textContent = "Angebote ansehen, Details öffnen, Galerie stöbern – ohne Bearbeitung.";
-    if (listSubline) listSubline.textContent = "Klicke auf eine Karte, um Bilder & Beschreibung zu sehen.";
-  } else {
-    eyebrow.textContent = "Adminbereich";
-    title.textContent = "Exklusive Wohnungsangebote verwalten";
-    subline.textContent = "Angebote pflegen, Bilder hinterlegen, löschen oder neu anlegen.";
-    if (listSubline) listSubline.textContent = "Klicke auf eine Karte, um Bilder & Beschreibung zu sehen oder zu entfernen.";
-  }
-
-  properties = loadProperties().map(normalizeProperty);
-  renderProperties();
-</script>
 </body>
 </html>
