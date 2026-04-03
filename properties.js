@@ -41,8 +41,12 @@
 
   function htmlToText(html) {
     const container = document.createElement('div');
-    container.innerHTML = html || '';
-    return (container.textContent || '').trim();
+    container.innerHTML = String(html || '')
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<\/(p|li|h3|h4|div|ul|ol)>/gi, ' ');
+    return String(container.innerText || container.textContent || '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function parseImageInput(value) {
