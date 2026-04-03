@@ -13,7 +13,7 @@
   ];
 
   function createId() {
-    if (window.crypto && crypto.randomUUID) return `prop-${crypto.randomUUID()}`;
+    if (window.crypto && window.crypto.randomUUID) return `prop-${window.crypto.randomUUID()}`;
     return `prop-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 

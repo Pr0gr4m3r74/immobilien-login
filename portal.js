@@ -184,7 +184,10 @@
       ? property.features.map((feature) => `<li>${App.escapeHtml(feature)}</li>`).join('')
       : `<li>${App.escapeHtml(t('portal.noFeatures'))}</li>`;
     dom.modalThumbs.innerHTML = property.images
-      .map((image, index) => `<button type="button" class="thumb-button${index === state.activeImageIndex ? ' is-active' : ''}" data-index="${index}"><img src="${App.escapeHtml(image)}" alt="${App.escapeHtml(property.title)}"></button>`)
+      .map(
+        (image, index) =>
+          `<button type="button" class="thumb-button${index === state.activeImageIndex ? ' is-active' : ''}" data-index="${index}"><img src="${App.escapeHtml(image)}" alt="${App.escapeHtml(property.title)}"></button>`
+      )
       .join('');
     dom.modalThumbs.querySelectorAll('[data-index]').forEach((button) => {
       button.addEventListener('click', () => {

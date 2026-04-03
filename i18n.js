@@ -31,7 +31,7 @@
     document.documentElement.lang = currentLanguage;
 
     target.querySelectorAll('[data-i18n]').forEach((node) => {
-      node.innerHTML = t(node.dataset.i18n);
+      node.textContent = t(node.dataset.i18n);
     });
 
     target.querySelectorAll('[data-i18n-text]').forEach((node) => {
