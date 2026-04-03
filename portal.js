@@ -516,11 +516,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
-    if (!App.requireSession()) {
-      window.location.replace('index.html');
-      return;
-    }
-
     Theme.initTheme();
     await I18n.init();
     App.bindSessionActivity();

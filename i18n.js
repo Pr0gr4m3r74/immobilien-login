@@ -5,7 +5,9 @@
   let currentLanguage = localStorage.getItem(KEY) || DEFAULT_LANGUAGE;
 
   function deepGet(source, path) {
-    return path.split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), source);
+    return path.split('.').reduce((acc, part) => {
+      return acc && Object.prototype.hasOwnProperty.call(acc, part) ? acc[part] : undefined;
+    }, source);
   }
 
   async function load() {

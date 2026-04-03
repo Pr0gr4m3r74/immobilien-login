@@ -39,7 +39,7 @@
       "success": "Erfolgreich angemeldet – Weiterleitung läuft.",
       "wait": "Bitte kurz warten.",
       "enterPassword": "Bitte Passwort eingeben.",
-      "wrongPassword": "Falsches Passwort. Noch {attempts} Versuch(e) verfügbar.",
+      "wrongPassword": "Falsches Passwort. Noch {attempts} Versuche verfügbar.",
       "cooldown": "Zu viele Fehlversuche. Bitte warten: {seconds}s"
     },
     "portal": {

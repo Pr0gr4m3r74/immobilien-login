@@ -59,7 +59,7 @@
       lastTouch = now;
       touchSession();
     };
-    ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach((eventName) => {
+    ['click', 'keydown', 'pointerdown', 'touchstart'].forEach((eventName) => {
       window.addEventListener(eventName, handler, { passive: true });
     });
   }
