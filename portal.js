@@ -189,30 +189,59 @@
     const preview = document.getElementById('imagePreview');
     preview.innerHTML = '';
     if (!state.draftImages.length) {
-      preview.innerHTML = `<p class="preview-empty">${App.t('previewEmpty')}</p>`;
+      const empty = document.createElement('p');
+      empty.className = 'preview-empty';
+      empty.textContent = App.t('previewEmpty');
+      preview.appendChild(empty);
       return;
     }
 
     state.draftImages.forEach((image, index) => {
+      const safeImage = PropertyStore.sanitizeImage(image);
+      if (!safeImage) return;
       const card = document.createElement('div');
       card.className = 'image-preview-card';
-      card.innerHTML = `
-        <img src="${image}" alt="${App.t('previewTitle')} ${index + 1}">
-        <div class="image-preview-card__actions">
-          <button type="button" class="icon-button" data-move="left" ${index === 0 ? 'disabled' : ''} aria-label="${App.t('previewMoveLeft')}">←</button>
-          <button type="button" class="icon-button" data-move="right" ${index === state.draftImages.length - 1 ? 'disabled' : ''} aria-label="${App.t('previewMoveRight')}">→</button>
-          <button type="button" class="icon-button icon-button--danger" data-remove aria-label="${App.t('previewRemove')}">×</button>
-        </div>`;
-      card.querySelector('[data-remove]').addEventListener('click', () => {
+      const imageNode = document.createElement('img');
+      imageNode.src = safeImage;
+      imageNode.alt = `${App.t('previewTitle')} ${index + 1}`;
+      card.appendChild(imageNode);
+
+      const actions = document.createElement('div');
+      actions.className = 'image-preview-card__actions';
+
+      const leftButton = document.createElement('button');
+      leftButton.type = 'button';
+      leftButton.className = 'icon-button';
+      leftButton.textContent = '←';
+      leftButton.disabled = index === 0;
+      leftButton.setAttribute('aria-label', App.t('previewMoveLeft'));
+
+      const rightButton = document.createElement('button');
+      rightButton.type = 'button';
+      rightButton.className = 'icon-button';
+      rightButton.textContent = '→';
+      rightButton.disabled = index === state.draftImages.length - 1;
+      rightButton.setAttribute('aria-label', App.t('previewMoveRight'));
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'icon-button icon-button--danger';
+      removeButton.textContent = '×';
+      removeButton.setAttribute('aria-label', App.t('previewRemove'));
+
+      actions.append(leftButton, rightButton, removeButton);
+      card.appendChild(actions);
+
+      removeButton.addEventListener('click', () => {
         state.draftImages.splice(index, 1);
         renderImagePreview();
       });
-      card.querySelector('[data-move="left"]').addEventListener('click', () => {
+      leftButton.addEventListener('click', () => {
         if (index === 0) return;
         [state.draftImages[index - 1], state.draftImages[index]] = [state.draftImages[index], state.draftImages[index - 1]];
         renderImagePreview();
       });
-      card.querySelector('[data-move="right"]').addEventListener('click', () => {
+      rightButton.addEventListener('click', () => {
         if (index >= state.draftImages.length - 1) return;
         [state.draftImages[index + 1], state.draftImages[index]] = [state.draftImages[index], state.draftImages[index + 1]];
         renderImagePreview();
@@ -260,40 +289,37 @@
   function validateForm(data) {
     clearValidation();
     let valid = true;
+    const safeImages = state.draftImages.map((image) => PropertyStore.sanitizeImage(image)).filter(Boolean);
     ['title', 'description', 'price', 'address', 'city', 'area', 'rooms'].forEach((field) => {
       if (!String(data[field] ?? '').trim()) {
         valid = false;
         setFieldError(field);
       }
     });
-    if (!state.draftImages.length) {
+    if (!safeImages.length) {
       valid = false;
       setFeedback(App.t('formErrorImages'), true);
     }
-    if (!valid && state.draftImages.length) {
+    if (!valid && safeImages.length) {
       setFeedback(App.t('formErrorRequired'), true);
     }
     return valid;
   }
 
   async function addFiles(files) {
-    const dataUrls = await Promise.all(Array.from(files).map((file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    })));
-    state.draftImages.push(...dataUrls.filter(Boolean));
-    renderImagePreview();
-  }
-
-  function addImageUrls() {
-    const textarea = document.getElementById('imageUrls');
-    const values = textarea.value.split(/\n+/).map((entry) => entry.trim()).filter(Boolean);
-    if (!values.length) return;
-    state.draftImages.push(...values);
-    textarea.value = '';
-    renderImagePreview();
+    try {
+      const dataUrls = await Promise.all(Array.from(files).map((file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      })));
+      state.draftImages.push(...dataUrls.filter(Boolean));
+      setFeedback('');
+      renderImagePreview();
+    } catch (error) {
+      setFeedback(App.t('formErrorImages'), true);
+    }
   }
 
   function saveProperty(event) {
@@ -314,7 +340,7 @@
       status: data.status,
       featured: document.getElementById('isFeatured').checked,
       createdAt: state.editingId ? PropertyStore.getById(state.editingId)?.createdAt : new Date().toISOString(),
-      images: [...state.draftImages]
+      images: state.draftImages.map((image) => PropertyStore.sanitizeImage(image)).filter(Boolean)
     });
 
     const successKey = state.editingId ? 'formSuccessUpdate' : 'formSuccessCreate';
@@ -409,7 +435,6 @@
         event.target.value = '';
       }
     });
-    document.getElementById('addImageUrls').addEventListener('click', addImageUrls);
     document.getElementById('prevImage').addEventListener('click', () => {
       const property = PropertyStore.getById(state.activePropertyId);
       if (!property) return;

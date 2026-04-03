@@ -18,6 +18,7 @@ window.App = (() => {
       heroSecondary: 'Workspace öffnen',
       heroStatOneLabel: 'Aktive Inserate',
       heroStatTwoLabel: 'Standorte',
+      heroStatThreeValue: '21 Tage',
       heroStatThreeLabel: 'Ø Vermarktungszeit',
       quickSearchTitle: 'Passende Immobilie finden',
       quickSearchText: 'Suche nach Ort, Kategorie oder Status und springe direkt zu relevanten Angeboten.',
@@ -165,6 +166,7 @@ window.App = (() => {
       heroSecondary: 'Open workspace',
       heroStatOneLabel: 'Active listings',
       heroStatTwoLabel: 'Locations',
+      heroStatThreeValue: '21 days',
       heroStatThreeLabel: 'Avg. marketing time',
       quickSearchTitle: 'Find the right property',
       quickSearchText: 'Search by city, category or status and jump straight to relevant listings.',
@@ -325,7 +327,7 @@ window.App = (() => {
   function t(key, vars = {}, language = getLanguage()) {
     const dict = translations[language] || translations[defaults.language];
     const template = dict[key] || translations[defaults.language][key] || key;
-    return Object.entries(vars).reduce((value, [name, replacement]) => value.replaceAll(`{${name}}`, replacement), template);
+    return Object.entries(vars).reduce((value, [name, replacement]) => value.split(`{${name}}`).join(String(replacement)), template);
   }
 
   function translateDocument(root = document) {

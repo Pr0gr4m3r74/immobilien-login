@@ -197,17 +197,10 @@
                 <h3 data-i18n="imageHelp">Bilder erscheinen sofort in der Vorschau und können sortiert oder entfernt werden.</h3>
               </div>
             </div>
-            <div class="form-grid form-grid--two">
-              <label>
-                <span data-i18n="imageUploadText">Mehrere Bilder hochladen</span>
-                <input id="imageFiles" type="file" accept="image/*" multiple>
-              </label>
-              <label>
-                <span data-i18n="imageUrlsLabel">Bild-URLs hinzufügen</span>
-                <textarea id="imageUrls" rows="4" data-i18n-placeholder="imageUrlsPlaceholder" placeholder="Jede URL in einer neuen Zeile"></textarea>
-                <button type="button" id="addImageUrls" class="button button--ghost button--small" data-i18n="addImageUrls">URLs übernehmen</button>
-              </label>
-            </div>
+            <label>
+              <span data-i18n="imageUploadText">Mehrere Bilder hochladen</span>
+              <input id="imageFiles" type="file" accept="image/*" multiple>
+            </label>
             <div id="imagePreview" class="image-preview-grid"></div>
           </div>
           <div class="button-row">
@@ -232,7 +225,7 @@
     </section>
   </div>
 
-  <dialog id="detailModal" class="detail-modal">
+  <dialog id="detailModal" class="detail-modal" aria-labelledby="modalTitle">
     <button type="button" id="closeModal" class="modal-close" data-i18n="modalClose">Schließen</button>
     <div class="detail-modal__grid">
       <div class="detail-modal__gallery">

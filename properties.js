@@ -4,6 +4,8 @@ window.PropertyStore = (() => {
   const makeSvg = (title, bgA, bgB, text = '#ffffff') =>
     `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${bgA}"/><stop offset="100%" stop-color="${bgB}"/></linearGradient></defs><rect width="1280" height="720" rx="40" fill="url(#g)"/><circle cx="1080" cy="120" r="120" fill="rgba(255,255,255,0.08)"/><circle cx="180" cy="560" r="220" fill="rgba(255,255,255,0.06)"/><text x="80" y="590" font-family="Inter, Arial" font-size="72" fill="${text}" opacity="0.94">${title}</text></svg>`)}`;
 
+  const fallbackImage = makeSvg('Property Preview', '#1d4ed8', '#0f172a');
+
   const initialProperties = [
     {
       id: 'luma-001',
@@ -81,9 +83,24 @@ window.PropertyStore = (() => {
     }
   ];
 
-  const createId = () => `luma-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+  const createId = () => {
+    if (crypto.randomUUID) return `luma-${crypto.randomUUID()}`;
+    return `luma-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+  };
+
+  function isSafeImageUrl(value) {
+    return /^https?:\/\//i.test(value) || /^data:image\//i.test(value);
+  }
+
+  function sanitizeImage(value) {
+    const next = String(value || '').trim();
+    return isSafeImageUrl(next) ? next : '';
+  }
 
   function normalizeProperty(property) {
+    const images = (Array.isArray(property.images) ? property.images : [])
+      .map(sanitizeImage)
+      .filter(Boolean);
     return {
       id: property.id || createId(),
       title: String(property.title || '').trim(),
@@ -97,7 +114,7 @@ window.PropertyStore = (() => {
       status: property.status || 'draft',
       featured: Boolean(property.featured),
       createdAt: property.createdAt || new Date().toISOString(),
-      images: Array.isArray(property.images) ? property.images.filter(Boolean) : []
+      images: images.length ? images : [fallbackImage]
     };
   }
 
@@ -183,6 +200,7 @@ window.PropertyStore = (() => {
 
   return {
     createId,
+    sanitizeImage,
     read,
     write,
     upsert,

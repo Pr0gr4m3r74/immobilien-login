@@ -48,7 +48,7 @@
               <span data-i18n="heroStatTwoLabel">Standorte</span>
             </article>
             <article class="metric-card">
-              <strong id="heroStatThreeValue">21 Tage</strong>
+              <strong id="heroStatThreeValue" data-i18n="heroStatThreeValue">21 Tage</strong>
               <span data-i18n="heroStatThreeLabel">Ø Vermarktungszeit</span>
             </article>
           </div>
@@ -83,6 +83,7 @@
               </label>
             </div>
             <button type="submit" class="button button--primary button--full" data-i18n="quickSearchButton">Suche starten</button>
+            <p id="quickSearchResult" class="helper-text"></p>
           </form>
         </aside>
       </section>
@@ -123,7 +124,7 @@
             <h2 data-i18n="workspaceTitle">Property Workspace</h2>
             <p class="section-text" data-i18n="accessText">Für die Demo stehen ein Kunden- und ein Admin-Zugang bereit. Der Fokus liegt auf dem Produkt, nicht auf einer Login-Maske.</p>
           </div>
-          <form class="stack-form" onsubmit="return false;">
+          <form class="stack-form" id="accessForm">
             <input type="text" autocomplete="username" hidden aria-hidden="true">
             <label>
               <span data-i18n="passwordLabel">Passwort</span>

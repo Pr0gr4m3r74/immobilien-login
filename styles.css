@@ -190,7 +190,7 @@ button {
 }
 
 :root[data-theme='dark'] .button--secondary {
-  color: #08111f;
+  color: var(--bg);
 }
 
 .button--ghost {

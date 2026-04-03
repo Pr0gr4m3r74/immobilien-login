@@ -66,9 +66,20 @@
     const query = document.getElementById('quickSearchQuery').value.trim();
     const city = document.getElementById('quickSearchCity').value;
     const status = document.getElementById('quickSearchStatus').value;
-    Auth.createSession('customer', PASS_HASH);
-    sessionStorage.setItem('portalFilters', JSON.stringify({ query, city, status, category: '', minPrice: '', maxPrice: '', sort: 'latest' }));
-    window.location.href = 'geheim.html';
+    const filtered = PropertyStore
+      .filter(PropertyStore.read().filter((property) => property.status !== 'draft'), {
+        query,
+        city,
+        status,
+        category: '',
+        minPrice: '',
+        maxPrice: '',
+        sort: 'latest'
+      });
+    renderFeatured(filtered);
+    document.getElementById('quickSearchResult').textContent = filtered.length
+      ? App.t('resultsLabel', { count: App.formatNumber(filtered.length) })
+      : App.t('resultsEmpty');
   }
 
   function showMessage(key, vars = {}, type = '') {
@@ -156,6 +167,7 @@
 
   function bindLogin() {
     const password = document.getElementById('accessPassword');
+    document.getElementById('accessForm').addEventListener('submit', (event) => event.preventDefault());
     document.getElementById('customerLogin').addEventListener('click', () => login('customer'));
     document.getElementById('adminLogin').addEventListener('click', () => login('admin'));
     document.getElementById('quickSearchForm').addEventListener('submit', runQuickSearch);
@@ -171,9 +183,10 @@
     const stats = PropertyStore.stats(properties);
     document.getElementById('heroStatOneValue').textContent = App.formatNumber(stats.total);
     document.getElementById('heroStatTwoValue').textContent = App.formatNumber(stats.cities);
-    document.getElementById('heroStatThreeValue').textContent = App.getLanguage() === 'de' ? '21 Tage' : '21 days';
+    document.getElementById('heroStatThreeValue').textContent = App.t('heroStatThreeValue');
     renderFeatured(properties.filter((property) => property.status !== 'draft'));
     populateQuickSearchCities(properties);
+    document.getElementById('quickSearchResult').textContent = '';
   }
 
   document.addEventListener('DOMContentLoaded', () => {
