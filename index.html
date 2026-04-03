@@ -123,14 +123,17 @@
             <h2 data-i18n="workspaceTitle">Property Workspace</h2>
             <p class="section-text" data-i18n="accessText">Für die Demo stehen ein Kunden- und ein Admin-Zugang bereit. Der Fokus liegt auf dem Produkt, nicht auf einer Login-Maske.</p>
           </div>
-          <label>
-            <span data-i18n="passwordLabel">Passwort</span>
-            <input id="accessPassword" type="password" data-i18n-placeholder="passwordPlaceholder" placeholder="Passwort eingeben" autocomplete="current-password">
-          </label>
-          <div class="button-row">
-            <button type="button" id="customerLogin" class="button button--primary" data-i18n="loginCustomer">Als Kunde öffnen</button>
-            <button type="button" id="adminLogin" class="button button--secondary" data-i18n="loginAdmin">Als Admin öffnen</button>
-          </div>
+          <form class="stack-form" onsubmit="return false;">
+            <input type="text" autocomplete="username" hidden aria-hidden="true">
+            <label>
+              <span data-i18n="passwordLabel">Passwort</span>
+              <input id="accessPassword" type="password" data-i18n-placeholder="passwordPlaceholder" placeholder="Passwort eingeben" autocomplete="current-password">
+            </label>
+            <div class="button-row">
+              <button type="button" id="customerLogin" class="button button--primary" data-i18n="loginCustomer">Als Kunde öffnen</button>
+              <button type="button" id="adminLogin" class="button button--secondary" data-i18n="loginAdmin">Als Admin öffnen</button>
+            </div>
+          </form>
           <p class="helper-text" data-i18n="loginHint">Demo-Zugang: Kunde 1234 · Admin Admin</p>
           <div class="message-box" id="msgBox" aria-live="polite"></div>
           <p class="footer-note" id="loginFooter"></p>
