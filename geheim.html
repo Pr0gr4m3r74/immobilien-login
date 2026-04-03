@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Exklusive Wohnungen</title>
 <link rel="stylesheet" href="styles.css">
+<script src="config.js"></script>
 <script src="auth.js"></script>
 </head>
 <body class="protected-body">
 <script>
-const SESSION_TIME = 30 * 60 * 1000; // 30min
+const SESSION_TIME = window.CONFIG.SESSION_TIMEOUT_MS;
 const role = sessionStorage.getItem("role");
 const credentialHash = sessionStorage.getItem("credentialHash");
 const loginTime = parseInt(sessionStorage.getItem("access"));
